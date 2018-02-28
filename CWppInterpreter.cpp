@@ -10,6 +10,8 @@
 #include <cstring>
 #include <ctype.h>
 #include <iostream>
+#include <stdexcept>
+
 
 struct KeyWordList_t {
     ETokenType   token;
@@ -32,6 +34,16 @@ KeyWordList_t KeyWords[] = {
 
 const char * helperTo2Str(ETokenType to){KeyWordList_t* kp= &KeyWords[0]; while (kp->token!= eTT_SN_LISTEND) { if (kp->token == to) return kp->name; kp++;} return "unknown :( !"; }
 
+uint32_t CMiniInterpreter::GetCurrentLine()
+{
+  uint32_t linecounter = 1;
+  const char * sp = m_StartPos;
+  while (sp < m_CurPos) {
+    if (*sp == '\n') {linecounter++;}
+    sp++;
+  }
+  return linecounter;
+}
 
 bool CMiniInterpreter::keyComp(const char * p_keyword)
 {
@@ -121,6 +133,7 @@ void CMiniInterpreter::GetNewName(std::string& p_name)
 float CMiniInterpreter::EvaluateNumExpression(const char * p_expression)
 {
   m_CurPos = p_expression;
+  m_StartPos = p_expression;
   std::cout << "--------------------------------------------\n" << p_expression << "\n";
   return EvaluateNumExpression(eTT_SN_Semicolon);
 }
@@ -176,7 +189,8 @@ float CMiniInterpreter::EvaluateNumExpression(ETokenType p_Endtoken)
       }
       LastPrecedence = 1;
     } else {
-      std::cout << " Error ++++++++++> unexpecte token \n" << helperTo2Str(totype) << std::endl;
+      std::string errorCode = std::string("Error: unexpected token EvaluateNumExpression Line: ")+  std::to_string(GetCurrentLine()) + " totype " + std::to_string(totype);
+      throw std::runtime_error(errorCode.c_str());
     }
 
 
@@ -247,6 +261,7 @@ void CMiniInterpreter::InterpretCode(const char * p_code)
 {
     //printf("%s",p_code);
     m_CurPos = p_code;
+    m_StartPos = p_code;
     bool statementDone = false;
     while (!statementDone) {
       ETokenType totype = GetToken('l');

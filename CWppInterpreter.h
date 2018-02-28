@@ -13,11 +13,14 @@ class CVariable {
   public:
     enum eVarType {
       eVT_float,
+      eVT_floatArray,
       eVT_string
     };
-    std::string m_name;
-    std::string m_val;
-    float m_valnum {0};
+    eVarType           m_VarType;
+    std::string        m_name;
+    std::string        m_val;
+    float              m_valnum {0};
+    std::vector<float> m_arraValues;
 };
 
 enum ETokenType {
@@ -45,18 +48,22 @@ class CMiniInterpreter {
     void PreloadVariable(const char * p_varname, float p_val) { CVariable* pv = new CVariable; pv->m_name = p_varname; pv->m_valnum = p_val;m_VarSpace.push_back(pv);  }
 
 private:
-
+  uint32_t GetCurrentLine();
   void CreateVariable();
   void GetNewName(std::string& p_name);
   float EvaluateNumExpression(ETokenType p_Endtoken);
   bool TryReadNumber();
   ETokenType GetToken(const char type = 'l');
   bool keyComp(const char * p_keyword);
-  std::vector<CVariable*> m_VarSpace;
-  const char * m_CurPos {nullptr};
-  const char * m_tokenName {nullptr};
-  float m_tokenValue { nanf("0") };
-  CVariable* m_lValueVar {nullptr};
+
+
+  std::vector<CVariable*>   m_VarSpace;
+
+  const char *              m_CurPos {nullptr};
+  const char *              m_StartPos {nullptr};
+  const char *              m_tokenName {nullptr};
+  float                     m_tokenValue { nanf("0") };
+  CVariable*                m_lValueVar {nullptr};
 };
 
 

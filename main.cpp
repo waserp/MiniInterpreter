@@ -19,31 +19,39 @@ bool equalFloat(float a , float b)
 }
 
 
+
 CMiniInterpreter interp;
 float Calculate(std::string p_expression);
 int main(int argc, char **argv)
 {
-  //std::cout << Calculate("3 + 4 * 2 / ( 1 - 5 ) ^ 2 ^ 3;") << std::endl;
+  interp.PreloadVariable("12zz",34.523);
+  interp.PreloadVariable("pi",3.1415926); float pi = 3.1415926; float a12zz = 34.523;
 
-  if ( 118!= interp.EvaluateNumExpression("11+(12+12) / 4 +101; ")) { std::cout << "Error " << std::endl; return -1;  }
 
-  if ( 9 != interp.EvaluateNumExpression("3 + 4 * 2 * 1.5 - 6; ")) { std::cout << "Error " << std::endl; return -1;  }
-  if ( 110 != interp.EvaluateNumExpression("3 + 4 * 2 * 1.5 - 6 + 100.6 + 0.4; ")) { std::cout << "Error " << std::endl; return -1;  }
-  if ( 159 != interp.EvaluateNumExpression("3 + 4 * 2 * 1.5 - 6 + 100 * 1.5; ")) { std::cout << "Error " << std::endl; return -1;  }
-  if ( 7 != interp.EvaluateNumExpression("3 + 4; ")) { std::cout << "Error " << std::endl; return -1;  }
-  if ( 3!= interp.EvaluateNumExpression("3 ; ")) { std::cout << "Error " << std::endl; return -1;  }
-  if ( 3!= interp.EvaluateNumExpression("12 / 4 ; ")) { std::cout << "Error " << std::endl; return -1;  }
-  if ( 127!= interp.EvaluateNumExpression("11+12+12 / 4 +101; ")) { std::cout << "Error " << std::endl; return -1;  }
-  if ( -1!= interp.EvaluateNumExpression("-1; ")) { std::cout << "Error " << std::endl; return -1;  }
-  if ( -2!= interp.EvaluateNumExpression("2 * -1; ")) { std::cout << "Error " << std::endl; return -1;  }
-  interp.PreloadVariable("12zz",34);
-  interp.PreloadVariable("pi",3.1415926); float pi = 3.1415926;
-  if ( -34!= interp.EvaluateNumExpression("12zz * -1; ")) { std::cout << "Error " << std::endl; return -1;  }
-  if ( -34!= interp.EvaluateNumExpression("12zz*-1;")) { std::cout << "Error " << std::endl; return -1;  }
+  equalFloat( interp.EvaluateNumExpression("pi;"),(pi));
+  equalFloat( interp.EvaluateNumExpression("11+(12+12) / 4 +101;"),(11+(12+12) / 4 +101));
+  equalFloat( interp.EvaluateNumExpression("3 + 4 * 2 * 1.5 - 6;"),(3 + 4 * 2 * 1.5 - 6));
+  equalFloat( interp.EvaluateNumExpression("3 + 4 * 2 * 1.5 - 6 + 100 * 1.5;"),(3 + 4 * 2 * 1.5 - 6 + 100 * 1.5));
+  equalFloat( interp.EvaluateNumExpression("3 + 4;"),(3 + 4));
+  equalFloat( interp.EvaluateNumExpression(" 3 ;"),(3 ));
+  equalFloat( interp.EvaluateNumExpression("12 / 4;"),(12 / 4));
+
+  equalFloat( interp.EvaluateNumExpression("(1.0+1.0)/345;"),((1.0+1.0)/345.0));
+  equalFloat( interp.EvaluateNumExpression("11+12+12 / 4 +101;"),(11+12+12 / 4 +101));
+  equalFloat( interp.EvaluateNumExpression("-1;"),(-1));
+  equalFloat( interp.EvaluateNumExpression("2 * -1;"),(2 * -1));
+  equalFloat( interp.EvaluateNumExpression("12zz * -1;"),(a12zz * -1));
+  equalFloat( interp.EvaluateNumExpression("12zz*-1;"),(a12zz*-1));
+
   equalFloat( interp.EvaluateNumExpression("3 + 4 * 2 * 1.5 - 6; "),(3 + 4 * 2 * 1.5 - 6)  );
   equalFloat( interp.EvaluateNumExpression("1.3 +-3.4 * 2 * 1.5 - 6; "),(1.3 +-3.4 * 2 * 1.5 - 6)  );
-  equalFloat( interp.EvaluateNumExpression("1.3 +-3.4 * 2 * (pi -6) + 0.001; "),(1.3 +-3.4 * 2.0F * (pi -6.0F) + 0.001F)  );
+  equalFloat( interp.EvaluateNumExpression("1.3 \n +-3.4 * 2 * (pi -6) + 0.001; "),(1.3 +-3.4 * 2.0F * (pi -6.0F) + 0.001F)  );
   //interp.InterpretCode(code);
-
+  try {
+    interp.EvaluateNumExpression("1.3\n +-3.4 * 2 * (pi -6) + 0.001 z; ");
+  }
+  catch (const std::exception& e) {
+    std::cout << "Script failed totaly expected with: " << e.what() << std::endl;
+  }
 	return 0;
 }
