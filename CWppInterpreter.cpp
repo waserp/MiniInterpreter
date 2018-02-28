@@ -34,7 +34,7 @@ const char * helperTo2Str(ETokenType to){KeyWordList_t* kp= &KeyWords[0]; while 
 
 
 bool CMiniInterpreter::keyComp(const char * p_keyword)
-{ 
+{
   const char * pt = m_CurPos;
   const char * kwp = p_keyword;
   while (*kwp != 0) {
@@ -53,11 +53,17 @@ bool CMiniInterpreter::keyComp(const char * p_keyword)
 
 bool CMiniInterpreter::TryReadNumber()
 {
+  bool DigitFlag = false;
   const char * pt = m_CurPos;
+  if ((*pt == '-') || (*pt == '+')) { // accept these as sign on first pos
+    pt++;
+  }
   while ( isdigit(*pt) || (*pt == '.') ) {
+    if (isdigit(*pt)) { DigitFlag = true; }
     pt++;
   }
   if (isalpha(*pt)) {return false;}  // this covers cases like "453hello", which is not a number
+  if (!DigitFlag) {return false;}  // we need at least a single digit, if there is none this is not a number
   m_tokenValue = atof(m_CurPos);
   m_CurPos = pt;
   printf("try read number success [%f] \n",m_tokenValue);
@@ -69,12 +75,19 @@ ETokenType CMiniInterpreter::GetToken(const char type)
     while (isspace(*m_CurPos)) { //(*m_CurPos==' ') || (*m_CurPos=='\t') || (*m_CurPos=='\n') || (*m_CurPos=='\r')) {
         m_CurPos++; // remove whitespace
     }
+
+    if (type == 'n') {  // expect a number, so first try read number
+      printf("\n  type = 'n' rm whitespace>%s<\n",m_CurPos);
+      //system("read a");
+      if (TryReadNumber()) { return eTT_ST_NumericValue; }
+    }
+
 //    printf("\nrm whitespace>%s<\n",m_CurPos);
     // now search keywords
     KeyWordList_t* pkwl = KeyWords;
     while (pkwl->token != eTT_SN_LISTEND) { //printf(" compare to -->%s\n",pkwl->name);
-      if (keyComp(pkwl->name)) { 
-        printf("found token -->%s %i\n",pkwl->name,pkwl->token); 
+      if (keyComp(pkwl->name)) {
+        printf("found token -->%s %i\n",pkwl->name,pkwl->token);
         return pkwl->token;
       }
       pkwl++;
@@ -82,8 +95,8 @@ ETokenType CMiniInterpreter::GetToken(const char type)
     printf("search in varspace\n");
     for (auto var : m_VarSpace) { // check if it is a variable
       if ( keyComp(var->m_name.c_str())) {
-        if (type == 'r') {  m_tokenValue = var->m_valnum; printf("det var %s\n",var->m_name.c_str()); return eTT_ST_NumericValue; } // directly resolve to num value if we are r
-        else if (type == 'l') { m_lValueVar = var; printf("det Lvar %s\n",var->m_name.c_str()); return eTT_ST_Variable; }
+        if (type == 'l') { m_lValueVar = var; printf("det Lvar %s\n",var->m_name.c_str()); return eTT_ST_Variable; }
+        else {  m_tokenValue = var->m_valnum; printf("det var %s\n",var->m_name.c_str()); return eTT_ST_NumericValue; } // directly resolve to num value if we are r
       }
     }
     // check if it is a number
@@ -108,8 +121,18 @@ void CMiniInterpreter::GetNewName(std::string& p_name)
 float CMiniInterpreter::EvaluateNumExpression(const char * p_expression)
 {
   m_CurPos = p_expression;
+  std::cout << "--------------------------------------------\n" << p_expression << "\n";
   return EvaluateNumExpression(eTT_SN_Semicolon);
 }
+
+
+
+/*
+Example with negative numbers:  5      +     -3      ;
+                                <num>  <op>  <num>
+
+
+*/
 
 // https://github.com/cparse/cparse
 // read this --> https://en.wikipedia.org/wiki/Shunting-yard_algorithm
@@ -120,13 +143,20 @@ float CMiniInterpreter::EvaluateNumExpression(ETokenType p_Endtoken)
   std::vector<oQType> outputQueue;
   std::vector<ETokenType> tokenStack;
   int16_t LastPrecedence = -1; // +- have 0, */ have 1, ^ has 2
-  ETokenType totype = GetToken();
+  char nextTtype = 'n';
+  ETokenType totype = GetToken(nextTtype);  // expect number
   while (totype != p_Endtoken) {
-    std::cout << "in while" << std::endl;
-    if (totype == eTT_KW_RoundParOpen) { outputQueue.push_back(oQType(EvaluateNumExpression(eTT_KW_RoundParClose),eTT_ST_NumericValue));}
-    else if (totype == eTT_ST_NumericValue) {
+    std::cout << "start of while >" << m_CurPos << "< analyzing" << helperTo2Str(totype) << std::endl;
+    if (totype == eTT_KW_RoundParOpen) {
+      nextTtype = 'l';
+      std::cout << " -------------> recursion enter\n";
+      outputQueue.push_back(oQType(EvaluateNumExpression(eTT_KW_RoundParClose),eTT_ST_NumericValue));
+      std::cout << " -------------> recursion done\n";
+    } else if (totype == eTT_ST_NumericValue) {
+      nextTtype = 'r';
       outputQueue.push_back(oQType(m_tokenValue,eTT_ST_NumericValue));
     } else if (( totype == eTT_SN_Plus ) || ( totype == eTT_SN_Minus )) {
+      nextTtype = 'n';
       if (LastPrecedence < 0) {
         tokenStack.push_back(totype);
       } else {
@@ -136,6 +166,7 @@ float CMiniInterpreter::EvaluateNumExpression(ETokenType p_Endtoken)
       }
       LastPrecedence = 0;
     } else if (( totype == eTT_SN_Mul ) || ( totype == eTT_SN_Div )) {
+      nextTtype = 'n';
       if (LastPrecedence < 1) {
         tokenStack.push_back(totype);
       } else {
@@ -144,15 +175,21 @@ float CMiniInterpreter::EvaluateNumExpression(ETokenType p_Endtoken)
         tokenStack.push_back(totype);
       }
       LastPrecedence = 1;
+    } else {
+      std::cout << " Error ++++++++++> unexpecte token \n" << helperTo2Str(totype) << std::endl;
     }
-    totype = GetToken();
-    std::cout << "after Get Token:" << m_CurPos << " to type:" << helperTo2Str(totype) << std::endl;
+
+
     // dump queues for debug
-    std::cout << "tokenstack:" << std::endl; 
-    for (auto to : tokenStack) {       std::cout << helperTo2Str(to) << " ";    } std::cout << std::endl;    std::cout << "outqueue:" << std::endl;
-    for (auto oQ : outputQueue) {      if (oQ.tok == eTT_ST_NumericValue) std::cout << oQ.val << " ";       else std::cout << helperTo2Str(oQ.tok);     } std::cout << std::endl; 
+    std::cout << "tokenstack: ";
+    for (auto to : tokenStack) {       std::cout << helperTo2Str(to) << ",";    } std::cout << std::endl;
+    std::cout << "outqueue  : ";
+    for (auto oQ : outputQueue) {      if (oQ.tok == eTT_ST_NumericValue) std::cout << oQ.val << " ";       else std::cout << helperTo2Str(oQ.tok);     } std::cout << std::endl;
     std::cout << "after dump:" << m_CurPos << std::endl;
     //system("read a");
+
+    totype = GetToken(nextTtype);
+
   }
   // all operators to output q
   while (tokenStack.size() > 0) {
@@ -161,9 +198,9 @@ float CMiniInterpreter::EvaluateNumExpression(ETokenType p_Endtoken)
   }
 
   // dump queues for debug
-  std::cout << "tokenstack:" << std::endl; 
+  std::cout << "tokenstack:" << std::endl;
   for (auto to : tokenStack) {       std::cout << helperTo2Str(to) << " ";    } std::cout << std::endl;    std::cout << "outqueue:" << std::endl;
-  for (auto oQ : outputQueue) {      if (oQ.tok == eTT_ST_NumericValue) std::cout << oQ.val << " ";       else std::cout << helperTo2Str(oQ.tok);     } std::cout << std::endl; 
+  for (auto oQ : outputQueue) {      if (oQ.tok == eTT_ST_NumericValue) std::cout << oQ.val << " ";       else std::cout << helperTo2Str(oQ.tok);     } std::cout << std::endl;
 
   std::vector<float> rpnstack;
   float result = 0.0F;

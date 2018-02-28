@@ -13,7 +13,7 @@ class CVariable {
   public:
     enum eVarType {
       eVT_float,
-      eVT_string  
+      eVT_string
     };
     std::string m_name;
     std::string m_val;
@@ -40,9 +40,10 @@ enum ETokenType {
 class CMiniInterpreter {
   public:
     void InterpretCode(const char * p_code);
-    
+
     float EvaluateNumExpression(const char * p_expression);
-    
+    void PreloadVariable(const char * p_varname, float p_val) { CVariable* pv = new CVariable; pv->m_name = p_varname; pv->m_valnum = p_val;m_VarSpace.push_back(pv);  }
+
 private:
 
   void CreateVariable();
