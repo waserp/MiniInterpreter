@@ -56,6 +56,7 @@ void ParChecker(const uint32_t p_count, const char * p_name, std::vector<CVariab
 void CMiniInterpreter::PushBuiltIns()
 {
   m_BuiltInFunMap["print"] = [](std::vector<CVariable*>& parVec){ std::cout << Colors::yellow; for (auto pPar : parVec) { std::cout << pPar->GetString(); }  std::cout << Colors::white; return 0.0F;};
+  m_BuiltInFunMap["sin"] = [](std::vector<CVariable*>& parVec){ std::cout << Colors::green << "fun sinus:" << sin(parVec[0]->GetFloatValue()) << Colors::white; return sin(parVec[0]->GetFloatValue());};
   //m_BuiltInFunMap["max"] = [](std::vector<CVariable*>& parVec){ float val; for (auto pPar : parVec) {  }  return 0.0F;};
 }
 
@@ -265,6 +266,9 @@ float CMiniInterpreter::EvaluateNumExpression(ETokenType p_Endtoken)
         tokenStack.push_back(totype);
       }
       LastPrecedence = 1;
+    } else if (totype == eTT_NM_BuiltIn) {
+      nextTtype = 'r';
+      outputQueue.push_back(oQType(ExecuteBuiltIn(),eTT_ST_NumericValue));
     } else {
       std::string errorCode = std::string("Error: unexpected token EvaluateNumExpression Line: ")+  std::to_string(GetCurrentLine()) + " totype " + std::to_string(totype);
       throw std::runtime_error(errorCode.c_str());
@@ -346,7 +350,7 @@ void CMiniInterpreter::PreParseFunction()
    throw std::runtime_error("not yet implemented!");
 }
 
-void CMiniInterpreter::ExecuteBuiltIn()
+float CMiniInterpreter::ExecuteBuiltIn()
 {
     // and now parse the arguments
     std::vector<CVariable*> paramList;
@@ -398,6 +402,7 @@ void CMiniInterpreter::ExecuteBuiltIn()
     for (auto par: paramList) {
       if (par->GetStackVarFlag()){delete par;}
     }
+    return m_tokenValue;
 }
 
 void CMiniInterpreter::InterpretCode(const char * p_code)
@@ -420,6 +425,7 @@ void CMiniInterpreter::InterpretCode(const char * p_code)
           return;
         break;
         case eTT_SN_Semicolon: // stray semicolon
+          std::cout << "unused semicolon" << std::endl;
         break;
         case eTT_KW_Function: // a function definition
         break;
@@ -432,6 +438,6 @@ void CMiniInterpreter::InterpretCode(const char * p_code)
         break;
       }
       printf("Gettoken result %i  %s \n",totype, m_tokenName);
-      if (totype == eTT_SN_Semicolon) {statementDone = true;}
+      //if (totype == eTT_SN_Semicolon) {statementDone = true;}
     }
 }

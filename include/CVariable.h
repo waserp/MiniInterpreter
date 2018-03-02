@@ -21,6 +21,7 @@ class CVariable {
 
   // todo GetString(); GetFloat(); GetArray();
     std::string& GetString();
+    float GetFloatValue() {return m_valnum;}
     void SetType(eVarType p_VarType) { m_VarType = p_VarType; }
     void SetFloatValue(float p_val) { m_valnum = p_val; }
     void SetStringValue(std::string& p_str) {m_val = p_str; }

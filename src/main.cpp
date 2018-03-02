@@ -73,7 +73,10 @@ int main(int argc, char **argv)
 
 
 
-  interp.InterpretCode("float foo = 6 * (1 + 2);\n print(\" hello:\",34.3,\" foo is:\",foo);\n   ");
+  interp.InterpretCode("float foo = 6 * (1 + 2);\n print(\" hello:\",34.3,\" foo is:\",foo);\n  print(\"\nkk\n\"); sin(0.1);  ");
+
+
+  interp.InterpretCode("float a = (sin(0.1) + 1.1) *2;  print(\"a=\",a,\"\n\");");
 
   std::cout << Colors::red << "bold red text\n" << Colors::yellow << "kkk" << Colors::white;
 	return 0;

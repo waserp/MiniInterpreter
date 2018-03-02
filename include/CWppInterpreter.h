@@ -61,7 +61,7 @@ private:
   bool TryReadStringConstant();
   void ParChecker(const uint32_t p_count, const char * p_name,std::vector<CVariable*>& parVec);
   void PushBuiltIns();
-  void ExecuteBuiltIn();
+  float ExecuteBuiltIn();
   void FindNext(const char * ch) {while (*m_CurPos!=0){ if (*m_CurPos==*ch) {m_CurPos++; return;} }throw std::runtime_error((" unexpected end of file while looking for [" + std::string(ch) + "]").c_str());}
 
   uint32_t GetCurrentLine();
