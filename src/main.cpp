@@ -1,8 +1,8 @@
 #include <stdio.h>
 
 
-#include "CWppInterpreter.h"
-
+#include "include/CWppInterpreter.h"
+#include "include/CColors.h"
 
 const char* code = "\nfloat zebra = 33.7; float a = 5;\n   float b = a + 5 * a;\n   float c = (a + b) * 4";
 
@@ -24,6 +24,7 @@ CMiniInterpreter interp;
 float Calculate(std::string p_expression);
 int main(int argc, char **argv)
 {
+/*
   interp.PreloadVariable("12zz",34.523);
   interp.PreloadVariable("pi",3.1415926); float pi = 3.1415926; float a12zz = 34.523;
 
@@ -53,5 +54,27 @@ int main(int argc, char **argv)
   catch (const std::exception& e) {
     std::cout << "Script failed totaly expected with: " << e.what() << std::endl;
   }
+
+  try {
+    interp.InterpretCode(" \n\nfoo = 6 * (1 + 2);\n\n  bar=foo*1.23;   ");
+  }
+  catch (const std::exception& e) {
+    std::cout << "Script failed totaly expected with: " << e.what() << std::endl;
+  }
+
+  interp.InterpretCode("float foo = 6 * (1 + 2);\n float bar=foo*1.23;\n   ");
+  equalFloat( interp.GetFloatValue("foo"), (6 * (1 + 2)));
+  equalFloat( interp.GetFloatValue("bar"), (6.0 * (1.0 + 2.0))*1.23 );
+
+  interp.InsertFunPointer("moo",";");
+  try {    interp.InsertFunPointer("moo",";");    }
+  catch (const std::exception& e) {    std::cout << "Script failed totaly expected with: " << e.what() << std::endl;  }
+*/
+
+
+
+  interp.InterpretCode("float foo = 6 * (1 + 2);\n print(\" hello:\",34.3,\" foo is:\",foo);\n   ");
+
+  std::cout << Colors::red << "bold red text\n" << Colors::yellow << "kkk" << Colors::white;
 	return 0;
 }

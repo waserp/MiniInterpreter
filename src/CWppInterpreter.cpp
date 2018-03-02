@@ -4,13 +4,14 @@
 
 
 
-#include "CWppInterpreter.h"
+#include "include/CWppInterpreter.h"
+#include "include/CColors.h"
 #include <cstdio>
 #include <cstdint>
 #include <cstring>
 #include <ctype.h>
 #include <iostream>
-#include <stdexcept>
+
 
 
 struct KeyWordList_t {
@@ -26,13 +27,39 @@ KeyWordList_t KeyWords[] = {
   {eTT_SN_Mul,"*"},
   {eTT_SN_Div,"/"},
   {eTT_SN_Semicolon,";"},
-  {eTT_SN_Zero, "dfdfd" },
+  {eTT_KW_Comma,","},
+  {eTT_SN_Zero, "ThisIsTheEndMyFriend" },
   {eTT_KW_RoundParOpen,"("},
   {eTT_KW_RoundParClose,")"},
+  {eTT_KW_Function,"function"},
+  {eTT_KW_DoubleQuotes,"\""},
   {eTT_SN_LISTEND,""} // mark the end of the list, let this allways at bottom
 };
 
 const char * helperTo2Str(ETokenType to){KeyWordList_t* kp= &KeyWords[0]; while (kp->token!= eTT_SN_LISTEND) { if (kp->token == to) return kp->name; kp++;} return "unknown :( !"; }
+
+
+CMiniInterpreter::CMiniInterpreter()
+{
+  PushBuiltIns();
+}
+
+CMiniInterpreter::~CMiniInterpreter()
+{
+}
+
+void ParChecker(const uint32_t p_count, const char * p_name, std::vector<CVariable*>& parVec)
+{
+  if (parVec.size() != p_count) { throw std::runtime_error(("Error, wrong number of parameters, expected [" + std::to_string(p_count) + "] detected [" + std::to_string(parVec.size()) + "]").c_str()); }
+}
+
+void CMiniInterpreter::PushBuiltIns()
+{
+  m_BuiltInFunMap["print"] = [](std::vector<CVariable*>& parVec){ std::cout << Colors::yellow; for (auto pPar : parVec) { std::cout << pPar->GetString(); }  std::cout << Colors::white; return 0.0F;};
+  //m_BuiltInFunMap["max"] = [](std::vector<CVariable*>& parVec){ float val; for (auto pPar : parVec) {  }  return 0.0F;};
+}
+
+
 
 uint32_t CMiniInterpreter::GetCurrentLine()
 {
@@ -82,17 +109,48 @@ bool CMiniInterpreter::TryReadNumber()
   return true;
 }
 
+bool CMiniInterpreter::TryReadName(std::string& p_name)
+{
+
+  p_name = "";
+  const char * pt = m_CurPos;
+  if (!isalpha(*pt)) return false; // name must start with a letter
+  while (isalnum(*pt)) {  // letters and digit
+    p_name += *pt;
+    pt++;
+  }
+  if (p_name.size() == 0) return false; // name must at least be 1 letter
+  m_CurPos = pt;
+  return true;
+}
+bool CMiniInterpreter::TryReadStringConstant()
+{
+  if (*m_CurPos!='"') return false;
+  m_StringConstant = "";
+  m_CurPos++;
+  while (*m_CurPos!='"') {
+    if (*m_CurPos==0) { throw std::runtime_error(("Error, Reading string constant no terminating '\"' detected"));   }
+    m_StringConstant += *m_CurPos;
+    m_CurPos++;
+  }
+  m_CurPos++;
+  return true;
+}
+
 ETokenType CMiniInterpreter::GetToken(const char type)
 {
     while (isspace(*m_CurPos)) { //(*m_CurPos==' ') || (*m_CurPos=='\t') || (*m_CurPos=='\n') || (*m_CurPos=='\r')) {
         m_CurPos++; // remove whitespace
     }
 
+    if (*m_CurPos == 0) return eTT_SN_Zero;
+
     if (type == 'n') {  // expect a number, so first try read number
-      printf("\n  type = 'n' rm whitespace>%s<\n",m_CurPos);
+      //printf("\n  type = 'n' rm whitespace>%s<\n",m_CurPos);
       //system("read a");
       if (TryReadNumber()) { return eTT_ST_NumericValue; }
     }
+    if (TryReadStringConstant()) { return eTT_SN_StringConstant;}
 
 //    printf("\nrm whitespace>%s<\n",m_CurPos);
     // now search keywords
@@ -104,13 +162,25 @@ ETokenType CMiniInterpreter::GetToken(const char type)
       }
       pkwl++;
     }
-    printf("search in varspace\n");
+    //printf("search in varspace\n");
     for (auto var : m_VarSpace) { // check if it is a variable
       if ( keyComp(var->m_name.c_str())) {
         if (type == 'l') { m_lValueVar = var; printf("det Lvar %s\n",var->m_name.c_str()); return eTT_ST_Variable; }
         else {  m_tokenValue = var->m_valnum; printf("det var %s\n",var->m_name.c_str()); return eTT_ST_NumericValue; } // directly resolve to num value if we are r
       }
     }
+    std::string name;
+    if (TryReadName(name)) {  // we got some sort of name
+      std::cout << " TryReadName succcess  found" << name << std::endl;
+      auto it = m_BuiltInFunMap.find(name);
+      if (it != m_BuiltInFunMap.end()) { std::cout << " Build In found found" << name << std::endl;
+        m_LastBuiltInFunction = it->second;
+        return eTT_NM_BuiltIn;
+      }
+      m_Unknownidentifier = name;
+      return eTT_NM_UnknownIdentifier;
+    }
+
     // check if it is a number
     if (TryReadNumber()) { return eTT_ST_NumericValue; }
     //printf("list end%s\n",m_CurPos);
@@ -123,6 +193,13 @@ void CMiniInterpreter::GetNewName(std::string& p_name)
   while (isspace(*m_CurPos)) { //(*m_CurPos==' ') || (*m_CurPos=='\t') || (*m_CurPos=='\n') || (*m_CurPos=='\r')) {
     m_CurPos++; // remove whitespace
   }
+  ETokenType totype = GetToken();
+  if ( totype == eTT_NM_UnknownIdentifier) { p_name = m_Unknownidentifier; return; }
+  if ( totype != eTT_SN_LISTEND ) {
+     printf("fatal expect new variable name after float, instead got [%s]\n",m_tokenName);
+     throw std::runtime_error(("fatal expect new variable name instead got [" + p_name + "]").c_str());
+  }
+
   while (isalnum(*m_CurPos)) {
     p_name += *m_CurPos;
     m_CurPos++;
@@ -151,7 +228,7 @@ Example with negative numbers:  5      +     -3      ;
 // read this --> https://en.wikipedia.org/wiki/Shunting-yard_algorithm
 float CMiniInterpreter::EvaluateNumExpression(ETokenType p_Endtoken)
 {
-  std::cout << "enter" << std::endl;
+  //std::cout << "enter" << std::endl;
   class oQType {public:oQType(float p_val,ETokenType p_tok):val(p_val),tok(p_tok){}float val;ETokenType tok;};
   std::vector<oQType> outputQueue;
   std::vector<ETokenType> tokenStack;
@@ -159,12 +236,12 @@ float CMiniInterpreter::EvaluateNumExpression(ETokenType p_Endtoken)
   char nextTtype = 'n';
   ETokenType totype = GetToken(nextTtype);  // expect number
   while (totype != p_Endtoken) {
-    std::cout << "start of while >" << m_CurPos << "< analyzing" << helperTo2Str(totype) << std::endl;
+    //std::cout << "start of while >" << m_CurPos << "< analyzing" << helperTo2Str(totype) << std::endl;
     if (totype == eTT_KW_RoundParOpen) {
       nextTtype = 'l';
-      std::cout << " -------------> recursion enter\n";
+      //std::cout << " -------------> recursion enter\n";
       outputQueue.push_back(oQType(EvaluateNumExpression(eTT_KW_RoundParClose),eTT_ST_NumericValue));
-      std::cout << " -------------> recursion done\n";
+      //std::cout << " -------------> recursion done\n";
     } else if (totype == eTT_ST_NumericValue) {
       nextTtype = 'r';
       outputQueue.push_back(oQType(m_tokenValue,eTT_ST_NumericValue));
@@ -195,11 +272,11 @@ float CMiniInterpreter::EvaluateNumExpression(ETokenType p_Endtoken)
 
 
     // dump queues for debug
-    std::cout << "tokenstack: ";
-    for (auto to : tokenStack) {       std::cout << helperTo2Str(to) << ",";    } std::cout << std::endl;
-    std::cout << "outqueue  : ";
-    for (auto oQ : outputQueue) {      if (oQ.tok == eTT_ST_NumericValue) std::cout << oQ.val << " ";       else std::cout << helperTo2Str(oQ.tok);     } std::cout << std::endl;
-    std::cout << "after dump:" << m_CurPos << std::endl;
+    //std::cout << "tokenstack: ";
+    //for (auto to : tokenStack) {       std::cout << helperTo2Str(to) << ",";    } std::cout << std::endl;
+    //std::cout << "outqueue  : ";
+    //for (auto oQ : outputQueue) {      if (oQ.tok == eTT_ST_NumericValue) std::cout << oQ.val << " ";       else std::cout << helperTo2Str(oQ.tok);     } std::cout << std::endl;
+    //std::cout << "after dump:" << m_CurPos << std::endl;
     //system("read a");
 
     totype = GetToken(nextTtype);
@@ -212,16 +289,16 @@ float CMiniInterpreter::EvaluateNumExpression(ETokenType p_Endtoken)
   }
 
   // dump queues for debug
-  std::cout << "tokenstack:" << std::endl;
-  for (auto to : tokenStack) {       std::cout << helperTo2Str(to) << " ";    } std::cout << std::endl;    std::cout << "outqueue:" << std::endl;
-  for (auto oQ : outputQueue) {      if (oQ.tok == eTT_ST_NumericValue) std::cout << oQ.val << " ";       else std::cout << helperTo2Str(oQ.tok);     } std::cout << std::endl;
+  //std::cout << "tokenstack:" << std::endl;
+  //for (auto to : tokenStack) {       std::cout << helperTo2Str(to) << " ";    } std::cout << std::endl;    std::cout << "outqueue:" << std::endl;
+  //for (auto oQ : outputQueue) {      if (oQ.tok == eTT_ST_NumericValue) std::cout << oQ.val << " ";       else std::cout << helperTo2Str(oQ.tok);     } std::cout << std::endl;
 
   std::vector<float> rpnstack;
   float result = 0.0F;
   // evaluate rpn
   for (oQType oQ : outputQueue) {
     if (oQ.tok == eTT_ST_NumericValue) {
-      std::cout << "push to rpn" << oQ.val << "\n";
+      //std::cout << "push to rpn " << oQ.val << "\n";
       result = oQ.val;
       rpnstack.push_back(oQ.val);
     } else {
@@ -239,27 +316,93 @@ float CMiniInterpreter::EvaluateNumExpression(ETokenType p_Endtoken)
         break;
       }
       rpnstack.push_back(result);
-      std::cout << "result : " << result << "\n";
+      //std::cout << "result : " << result << "\n";
     }
   }
   return result;
 }
 
-void CMiniInterpreter::CreateVariable()
+void CMiniInterpreter::CreateVariable(CVariable::eVarType p_VarType)
 {
-  if ( GetToken() != eTT_SN_LISTEND ) {printf("fatal expect new variable name after float, instead got [%s]\n",m_tokenName);}
-  CVariable* pVar = new CVariable;
+
+  CVariable* pVar = new CVariable(p_VarType);
   GetNewName(pVar->m_name);
   printf("Variable with name :[%s] created\n",pVar->m_name.c_str());
+  m_VarSpace.push_back(pVar);
   ETokenType totype = GetToken();
   if (totype == eTT_SN_Semicolon) { return; } // were done, ok
   if (totype == eTT_SN_Equal) { pVar->m_valnum = EvaluateNumExpression(eTT_SN_Semicolon); return;}
   printf("fatal expect Semicolon after Variable definition name[%s] [%i]\n",m_tokenName, totype);
+  throw std::runtime_error(("Error fatal expect Semicolon after Variable definition. Variable Name[" + pVar->m_name + "] totype[" + std::to_string(totype) + "] Line["+ std::to_string(GetCurrentLine()) +"]\n").c_str());
+}
+void CMiniInterpreter::PreParseFunction()
+{
+   std::string funname;
+   GetNewName(funname);
+   InsertFunPointer(funname,m_CurPos);
+   // advance m_CurPos first behind function parameter and then behind function body.
+   //FindNext("(");
+   //FindNext(")");
+   throw std::runtime_error("not yet implemented!");
+}
+
+void CMiniInterpreter::ExecuteBuiltIn()
+{
+    // and now parse the arguments
+    std::vector<CVariable*> paramList;
+    ETokenType totype = GetToken('l');
+    ETokenType NextExpected = eTT_KW_RoundParOpen;
+    while (totype != eTT_KW_RoundParClose) {
+      std::cout << " ExecBuilt in : " << totype << std::endl;
+      if ((totype != NextExpected) && (NextExpected != eTT_KW_DontCare)) {  throw std::runtime_error("Unexpected token while parsing parameter list");}
+
+      switch (totype) {
+        case eTT_ST_Variable :
+          paramList.push_back(m_lValueVar);
+          NextExpected = eTT_KW_Comma;
+        break;
+        case eTT_KW_Comma:
+          NextExpected = eTT_KW_DontCare;
+        break;
+        case eTT_ST_NumericValue:
+          {
+            CVariable* pVar = new CVariable(CVariable::eVT_float,true);
+            pVar->SetFloatValue(m_tokenValue);
+            paramList.push_back(pVar);
+            NextExpected = eTT_KW_Comma;
+          }
+        break;
+        case eTT_SN_StringConstant:
+          {
+            CVariable* pVar = new CVariable(CVariable::eVT_string,true);
+            std::cout << " StringConstant Found :" << m_StringConstant << std::endl;
+            pVar->SetStringValue(m_StringConstant);
+            paramList.push_back(pVar);
+            NextExpected = eTT_KW_Comma;
+          }
+        break;
+        // todo numeric or string
+        default :
+          if (totype != NextExpected) {
+            throw std::runtime_error("Unexpected token while parsing parameter list 2");
+          } else {
+             NextExpected = eTT_KW_DontCare;
+          }
+        break;
+      }
+      totype = GetToken('l');
+    }
+    std::cout << "execute the function " << std::endl;
+    m_tokenValue = m_LastBuiltInFunction(paramList);
+    // now delete specialy created vars
+    for (auto par: paramList) {
+      if (par->GetStackVarFlag()){delete par;}
+    }
 }
 
 void CMiniInterpreter::InterpretCode(const char * p_code)
 {
-    //printf("%s",p_code);
+    printf("%s",p_code);
     m_CurPos = p_code;
     m_StartPos = p_code;
     bool statementDone = false;
@@ -267,12 +410,24 @@ void CMiniInterpreter::InterpretCode(const char * p_code)
       ETokenType totype = GetToken('l');
       switch (totype) {
         case eTT_KW_float:
-          CreateVariable();
+          CreateVariable(CVariable::eVT_float);
         break;
         case eTT_ST_Variable:
           m_lValueVar->m_valnum = EvaluateNumExpression(eTT_SN_Semicolon);
         break;
+        case eTT_SN_Zero:
+          std::cout << "script exit, processed:" << m_CurPos - m_StartPos << " of " << strlen(p_code) << std::endl;
+          return;
+        break;
+        case eTT_SN_Semicolon: // stray semicolon
+        break;
+        case eTT_KW_Function: // a function definition
+        break;
+        case eTT_NM_BuiltIn: // a built in function call
+          ExecuteBuiltIn();
+        break;
         default :
+          throw std::runtime_error(("Error Unexpected token totype[" + std::to_string(totype) + "] Line["+ std::to_string(GetCurrentLine()) +"]\n").c_str());
           return;
         break;
       }

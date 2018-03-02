@@ -14,6 +14,8 @@
 				<Compiler>
 					<Add option="-O2" />
 					<Add option="-std=c++11" />
+					<Add directory="/home/waserp/tmp/codeliteworkspace/MiniInterpreter/" />
+					<Add directory="include" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -24,9 +26,13 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
-		<Unit filename="CWppInterpreter.cpp" />
-		<Unit filename="CWppInterpreter.h" />
-		<Unit filename="main.cpp" />
+		<Unit filename="include/CColors.h" />
+		<Unit filename="include/CVariable.h" />
+		<Unit filename="include/CWppInterpreter.h" />
+		<Unit filename="src/CColors.cpp" />
+		<Unit filename="src/CVariable.cpp" />
+		<Unit filename="src/CWppInterpreter.cpp" />
+		<Unit filename="src/main.cpp" />
 		<Extensions>
 			<code_completion />
 			<debugger />
