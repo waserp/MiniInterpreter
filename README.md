@@ -14,6 +14,11 @@ Features:
 ## State
 in early development, check back in April, I'm coding.
 
+### TODO
+- function calls
+- Arrays
+- string variables
+
 
 ## Example application
 
@@ -33,7 +38,7 @@ int main(int argc, char **argv)
 Compile it under Linux:
 
 ```bash
-$ g++ --std=c++11 main.cpp CWppInterpreter.cpp -o Hello
+$ g++ --std=c++11 main.cpp CWppInterpreter.cpp CVariable.cpp CColors.cpp -o Hello
 $ ./HelloWorld
 Hello Slartibartfast
 $
@@ -41,14 +46,9 @@ $
 
 ## Script examples
 ```c
-// the script needs a main function, it is executed first
-function float main()
-{
-  float a = 3;
-  float b = a + 2 * 5;
-  print("Result is " string(b));  // note: this does not work yet
-  foo(3 * a);
-}
+
+// the script does not need a main function it executes the code outside a function definition
+// functions have to be defined before they are called
 
 function float foo(float n)
 {
@@ -61,6 +61,12 @@ function float foo(float n)
   dump(vals);  // textual dump of the array or variable, style vals=[0,1,2,3,4 ...];
   dumpall();   // dumps all variables
 }
+
+
+float a = 3;
+float b = a + 2 * 5;
+print("Result is ", b, "\n");  // note: print takes zero to infinite arguments and plots them all
+b = foo(3 * a);
 
 
 ```

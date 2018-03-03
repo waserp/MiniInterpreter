@@ -62,6 +62,8 @@ void TestNumericBoleanEvaluator() {
   equalFloat( interp.EvaluateNumExpression("5 > 6;"),(5 > 6));
   equalFloat( interp.EvaluateNumExpression("5 == 6;"),(5 == 6));
   equalFloat( interp.EvaluateNumExpression("-1 == -1;"),(-1 == -1));
+  equalFloat( interp.EvaluateNumExpression("3 + 1 == 1 + 2;"),(3 + 1 == 1 + 2));
+  equalFloat( interp.EvaluateNumExpression("9.6 + 1 < 2 + 2;"),(9.6 + 1 < 2 + 2));  // puh use a parenthesis for this things
   PassedMessage();
 }
 
