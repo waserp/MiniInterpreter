@@ -21,6 +21,7 @@ struct KeyWordList_t {
 
 KeyWordList_t KeyWords[] = {
   {eTT_KW_float,"float"},
+  {eTT_KW_StringDesignator,"string"},
   {eTT_SN_Plus,"+"},
   {eTT_SN_Minus,"-"},
   {eTT_SN_NotEqualCompare,"!="},
@@ -179,11 +180,16 @@ ETokenType CMiniInterpreter::GetToken(const char type)
     }
     std::string name;
     if (TryReadName(name)) {  // we got some sort of name
-      std::cout << " TryReadName succcess  found" << name << std::endl;
+      std::cout << " TryReadName succcess  found [" << name << "]" << std::endl;
       auto it = m_BuiltInFunMap.find(name);
-      if (it != m_BuiltInFunMap.end()) { std::cout << " Build In found found" << name << std::endl;
+      if (it != m_BuiltInFunMap.end()) { std::cout << " Build In found found " << name << std::endl;
         m_LastBuiltInFunction = it->second;
         return eTT_NM_BuiltIn;
+      }
+      auto itf = m_FunSpace.find(name);
+      if (itf != m_FunSpace.end()) {  std::cout << " function name found " << name << std::endl;
+        m_LastFunctionDescriptor = itf->second;
+        return eTT_SN_FunctionName;
       }
       m_Unknownidentifier = name;
       return eTT_NM_UnknownIdentifier;
@@ -346,7 +352,6 @@ float CMiniInterpreter::EvaluateNumExpression(ETokenType p_Endtoken)
 
 void CMiniInterpreter::CreateVariable(CVariable::eVarType p_VarType)
 {
-
   CVariable* pVar = new CVariable(p_VarType);
   GetNewName(pVar->m_name);
   printf("Variable with name :[%s] created\n",pVar->m_name.c_str());
@@ -360,12 +365,27 @@ void CMiniInterpreter::CreateVariable(CVariable::eVarType p_VarType)
 void CMiniInterpreter::PreParseFunction()
 {
    std::string funname;
+   std::string varname;
+   std::cout << Colors::blue <<  m_CurPos << Colors::white << std::endl;
    GetNewName(funname);
-   InsertFunPointer(funname,m_CurPos);
+   functionDescriptor_t* fundes = new functionDescriptor_t;
+   if (eTT_KW_RoundParOpen != GetToken()) { throw std::runtime_error("Error expect '(' after function <name>!"); }
+   ETokenType totype;
+   do {
+     totype = GetToken('l');
+     if ((totype == eTT_KW_float) || (totype == eTT_KW_StringDesignator)) {
+       GetNewName(varname);
+       fundes->LocalVarNames.push_back(std::pair<std::string,ETokenType>(varname,totype));
+     } else if ((totype != eTT_KW_Comma) && (totype != eTT_KW_RoundParClose)) { throw std::runtime_error("Error unexpect token in function definition");  }
+     std::cout << Colors::blue <<  m_CurPos << Colors::white << std::endl;
+   } while (totype != eTT_KW_RoundParClose );
+   if (GetToken('l') != eTT_KW_BraceOpen) { throw std::runtime_error("Error unexpect token in function definition");  }
+   fundes->StartOfFuncode = m_CurPos;
+   SkipPair(eTT_KW_BraceOpen,eTT_KW_BraceClose,false);
+   InsertFunPointer(funname,fundes);
+   // parse parameters
+   std::cout << " done:" << Colors::blue <<  m_CurPos << Colors::white << std::endl;
    // advance m_CurPos first behind function parameter and then behind function body.
-   //FindNext("(");
-   //FindNext(")");
-   throw std::runtime_error("not yet implemented!");
 }
 
 float CMiniInterpreter::ExecuteBuiltIn()
@@ -453,6 +473,29 @@ void CMiniInterpreter::SkipPair(ETokenType p_Starttoken,ETokenType p_Endtoken, b
   } while(totype != p_Endtoken);
 }
 
+void CMiniInterpreter::ExecuteFunction()
+{
+  std::cout << Colors::violet << "execute this-->" <<  Colors::white << std::endl;
+  // parse given parameters
+  std::map<std::string,CVariable*>* backup = m_ParameterVariableMap;
+  std::map<std::string,CVariable*> parmap;
+  m_ParameterVariableMap = &parmap;
+  // parse given parameters
+  if (GetToken('l') != eTT_KW_RoundParOpen) {throw std::runtime_error("Error expected '(' "); }
+  ETokenType totype;
+  do {
+    totype = GetToken('l');
+
+  } while(totype != eTT_KW_RoundParClose);
+  std::cout << Colors::violet << "execute this-->" << m_LastFunctionDescriptor->StartOfFuncode  <<  Colors::white << std::endl;
+  const char * backupPosition = m_CurPos;
+  InterpretCode(m_LastFunctionDescriptor->StartOfFuncode, eTT_KW_BraceClose);
+
+  // restore old parameters
+  m_ParameterVariableMap = backup;
+  m_CurPos = backupPosition; // continiue at old position
+}
+
 
 void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)
 {
@@ -479,6 +522,10 @@ void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)
           std::cout << "unused semicolon" << std::endl;
         break;
         case eTT_KW_Function: // a function definition
+          PreParseFunction();
+        break;
+        case eTT_SN_FunctionName: // a function call
+          ExecuteFunction();
         break;
         case eTT_KW_While:  // while detected
           ExecuteWhile();

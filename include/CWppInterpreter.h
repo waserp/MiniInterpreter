@@ -17,6 +17,7 @@
 enum ETokenType {
   eTT_SN_LISTEND = 0,
   eTT_KW_float,
+  eTT_KW_StringDesignator,
   eTT_SN_Plus,
   eTT_SN_Minus,
   eTT_SN_Equal,
@@ -35,6 +36,7 @@ enum ETokenType {
   eTT_ST_NumericValue,
   eTT_ST_Variable,
   eTT_KW_Function,
+  eTT_SN_FunctionName,
   eTT_NM_Function,
   eTT_NM_BuiltIn,
   eTT_KW_DontCare,
@@ -43,6 +45,11 @@ enum ETokenType {
   eTT_KW_DoubleQuotes,
   eTT_SN_StringConstant,
   eTT_KW_While
+};
+
+struct functionDescriptor_t {
+  const char *                                        StartOfFuncode {nullptr};
+  std::vector<std::pair<std::string,ETokenType>>      LocalVarNames;
 };
 
 
@@ -58,9 +65,10 @@ class CMiniInterpreter {
     void PreloadVariable(const char * p_varname, float p_val) { CVariable* pv = new CVariable(CVariable::eVT_float); pv->m_name = p_varname; pv->m_valnum = p_val;m_VarSpace.push_back(pv);  }
     float GetFloatValue(const char * p_varname) { for(auto&var:m_VarSpace){ if(0==var->m_name.compare(p_varname)) {return var->m_valnum;} } return nanf("");}
 
-    void InsertFunPointer(std::string p_funname, const char * p_pointInCode) {
+    void InsertFunPointer(std::string p_funname, functionDescriptor_t* fundes) {
         if (m_FunSpace.end() != m_FunSpace.find(p_funname)) { throw std::runtime_error(("duplicate function name [" + p_funname + "]").c_str()); };
-        m_FunSpace[p_funname] = m_CurPos;    }
+          m_FunSpace[p_funname] = fundes;
+        }
 
 
 private:
@@ -70,6 +78,7 @@ private:
   void PushBuiltIns();
   float ExecuteBuiltIn();
   void ExecuteWhile();
+  void ExecuteFunction();
   void SkipPair(ETokenType p_Starttoken,ETokenType p_Endtoken, bool p_first = true);
   void FindNext(const char * ch) {while (*m_CurPos!=0){ if (*m_CurPos==*ch) {m_CurPos++; return;} }throw std::runtime_error((" unexpected end of file while looking for [" + std::string(ch) + "]").c_str());}
 
@@ -84,8 +93,8 @@ private:
 
 
   std::vector<CVariable*>   m_VarSpace;
-  std::map<std::string,const char *>   m_FunSpace;  // function name to point in code after function name i.e. "function foo(float a, float b)" the const char* points to '('.
-  std::map<std::string,BuiltInfunction_t> m_BuiltInFunMap;
+  std::map<std::string,functionDescriptor_t*>  m_FunSpace;  // function name to point in code after function name i.e. "function foo(float a, float b)" the const char* points to '('.
+  std::map<std::string,BuiltInfunction_t>    m_BuiltInFunMap;
 
   const char *              m_CurPos {nullptr};
   const char *              m_StartPos {nullptr};
@@ -93,8 +102,11 @@ private:
   std::string               m_Unknownidentifier;
   std::string               m_StringConstant;
   BuiltInfunction_t         m_LastBuiltInFunction {nullptr};
+  functionDescriptor_t*     m_LastFunctionDescriptor {nullptr};
   float                     m_tokenValue { nanf("0") };
   CVariable*                m_lValueVar {nullptr};
+  std::map<std::string,CVariable*>*
+                            m_ParameterVariableMap {nullptr};
 };
 
 

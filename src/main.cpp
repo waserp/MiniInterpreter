@@ -82,15 +82,21 @@ void TestWhileFlowControl() {
   PassedMessage();
 }
 
+void TestFunctionCalls() {
+  CMiniInterpreter interp;
+  interp.InterpretCode(" float globVar = 1; function fooNoPar () { print(\"fooNoPar\", globVar ,\"\n\"); globVar = 7; }  fooNoPar(2,3);  print(globVar);  ");
 
+  //interp.InterpretCode("  function foo (float cc, float dd) { print(\"fromfoo\",cc,\"\",dd,\"\") return cc + dd; }  foo(2,3);");
+  PassedMessage();
+}
 
 //float Calculate(std::string p_expression);
 int main(int argc, char **argv)
 {
-  TestNumericEvaluator();
-  TestNumericBoleanEvaluator();
-  TestWhileFlowControl();
-
+  //TestNumericEvaluator();
+  //TestNumericBoleanEvaluator();
+  //TestWhileFlowControl();
+  TestFunctionCalls();
   EndReport();
 
 /*
