@@ -12,7 +12,7 @@ bool equalFloat(float a , float b)
 {
   std::cout << "  diff  " << fabs(a-b) << std::endl;
   if (fabs(a-b)<0.0001) return true;
-  std::cout << " ERROR " << " evaluated: " << a << " expected " << b << std::endl;
+  std::cout << Colors::red << " ERROR " << " evaluated: " << a << " expected " << b << Colors::white << std::endl;
   (void) system("read a");
   exit(-1);
   return false;
@@ -73,11 +73,17 @@ int main(int argc, char **argv)
 
 
 
-  interp.InterpretCode("float foo = 6 * (1 + 2);\n print(\" hello:\",34.3,\" foo is:\",foo);\n  print(\"\nkk\n\"); sin(0.1);  ");
+//  interp.InterpretCode("float foo = 6 * (1 + 2);\n print(\" hello:\",34.3,\" foo is:\",foo);\n  print(\"\nkk\n\"); sin(0.1);  ");
 
 
-  interp.InterpretCode("float a = (sin(0.1) + 1.1) *2;  print(\"a=\",a,\"\n\");");
+//  interp.InterpretCode("        float bar = (sin(0.1) + 1.1) *2.0;  print(\"bar=\",bar,\"\n\");");
+//  equalFloat( interp.GetFloatValue("bar"), ((sin(0.1) + 1.1) *2.0 ));
 
-  std::cout << Colors::red << "bold red text\n" << Colors::yellow << "kkk" << Colors::white;
+  //interp.InterpretCode("  foo = 6 * (1 + 2);  bar=foo*1.23;   ");
+  //interp.InterpretCode("  float bar = 2;  bar= bar - 1;  ");
+
+  interp.InterpretCode("  float bar = 2; while(bar) { print(\"bar=\",bar); bar = bar -1;}  print(\"exit\");  ");
+
+
 	return 0;
 }

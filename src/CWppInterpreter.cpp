@@ -28,10 +28,15 @@ KeyWordList_t KeyWords[] = {
   {eTT_SN_Div,"/"},
   {eTT_SN_Semicolon,";"},
   {eTT_KW_Comma,","},
+  {eTT_SN_LessThan,"<"},
+  {eTT_SN_GreaterThan,">"},
   {eTT_SN_Zero, "ThisIsTheEndMyFriend" },
   {eTT_KW_RoundParOpen,"("},
   {eTT_KW_RoundParClose,")"},
+  {eTT_KW_BraceOpen,"{"},
+  {eTT_KW_BraceClose,"}"},
   {eTT_KW_Function,"function"},
+  {eTT_KW_While,"while"},
   {eTT_KW_DoubleQuotes,"\""},
   {eTT_SN_LISTEND,""} // mark the end of the list, let this allways at bottom
 };
@@ -405,7 +410,38 @@ float CMiniInterpreter::ExecuteBuiltIn()
     return m_tokenValue;
 }
 
-void CMiniInterpreter::InterpretCode(const char * p_code)
+
+void CMiniInterpreter::ExecuteWhile()
+{
+  ETokenType totype = GetToken('l');
+  if (totype != eTT_KW_RoundParOpen) {throw std::runtime_error("Error no '(' after 'while'"); }
+  const char * BeginOfExpression = m_CurPos;
+  std::cout << "\n     dump before entry >" << m_CurPos;
+  while ( 0 != lrintf(EvaluateNumExpression(eTT_KW_RoundParClose))) {
+    if (GetToken('l') != eTT_KW_BraceOpen) {throw std::runtime_error("Error no '{' after 'while (..)'"); }
+    InterpretCode(m_CurPos, eTT_KW_BraceClose);
+    m_CurPos = BeginOfExpression; // back to begin if expression
+    std::cout << "\n     dump end of loop >" << m_CurPos;
+  }
+  std::cout << "\n     dump after while loop >" << m_CurPos;
+  SkipPair(eTT_KW_BraceOpen,eTT_KW_BraceClose);
+}
+
+void CMiniInterpreter::SkipPair(ETokenType p_Starttoken,ETokenType p_Endtoken, bool p_first)
+{
+  if (p_first) {
+    if (GetToken('l') != p_Starttoken) {throw std::runtime_error("Error SkipPair no '{' "); }
+  }
+  ETokenType totype;
+  do {
+    totype = GetToken('l');
+    if (totype == p_Starttoken) {SkipPair(p_Starttoken,p_Endtoken,false);}
+    if (totype == eTT_SN_Zero) {throw std::runtime_error("Error SkipPair no '}' before end of file");}
+  } while(totype != p_Endtoken);
+}
+
+
+void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)
 {
     printf("%s",p_code);
     m_CurPos = p_code;
@@ -413,11 +449,13 @@ void CMiniInterpreter::InterpretCode(const char * p_code)
     bool statementDone = false;
     while (!statementDone) {
       ETokenType totype = GetToken('l');
+      if (totype == p_Endtoken) { std::cout << "endtoken found \n"; return;}
       switch (totype) {
         case eTT_KW_float:
           CreateVariable(CVariable::eVT_float);
         break;
         case eTT_ST_Variable:
+          if (GetToken('l') != eTT_SN_Equal) {throw std::runtime_error("Error no '=' after variable name"); }
           m_lValueVar->m_valnum = EvaluateNumExpression(eTT_SN_Semicolon);
         break;
         case eTT_SN_Zero:
@@ -428,6 +466,9 @@ void CMiniInterpreter::InterpretCode(const char * p_code)
           std::cout << "unused semicolon" << std::endl;
         break;
         case eTT_KW_Function: // a function definition
+        break;
+        case eTT_KW_While:  // while detected
+          ExecuteWhile();
         break;
         case eTT_NM_BuiltIn: // a built in function call
           ExecuteBuiltIn();

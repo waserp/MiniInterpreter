@@ -23,9 +23,13 @@ enum ETokenType {
   eTT_SN_Mul,
   eTT_SN_Div,
   eTT_SN_Semicolon,
+  eTT_SN_LessThan,
+  eTT_SN_GreaterThan,
   eTT_SN_Zero,
   eTT_KW_RoundParOpen,
   eTT_KW_RoundParClose,
+  eTT_KW_BraceOpen,
+  eTT_KW_BraceClose,
   eTT_ST_NumericValue,
   eTT_ST_Variable,
   eTT_KW_Function,
@@ -35,7 +39,8 @@ enum ETokenType {
   eTT_KW_Comma,
   eTT_NM_UnknownIdentifier,
   eTT_KW_DoubleQuotes,
-  eTT_SN_StringConstant
+  eTT_SN_StringConstant,
+  eTT_KW_While
 };
 
 
@@ -45,7 +50,7 @@ class CMiniInterpreter {
     ~CMiniInterpreter();
     typedef std::function<float(std::vector<CVariable*>&)> BuiltInfunction_t;
 
-    void InterpretCode(const char * p_code);
+    void InterpretCode(const char * p_code, ETokenType p_Endtoken = eTT_SN_Zero);
 
     float EvaluateNumExpression(const char * p_expression);
     void PreloadVariable(const char * p_varname, float p_val) { CVariable* pv = new CVariable(CVariable::eVT_float); pv->m_name = p_varname; pv->m_valnum = p_val;m_VarSpace.push_back(pv);  }
@@ -62,6 +67,8 @@ private:
   void ParChecker(const uint32_t p_count, const char * p_name,std::vector<CVariable*>& parVec);
   void PushBuiltIns();
   float ExecuteBuiltIn();
+  void ExecuteWhile();
+  void SkipPair(ETokenType p_Starttoken,ETokenType p_Endtoken, bool p_first = true);
   void FindNext(const char * ch) {while (*m_CurPos!=0){ if (*m_CurPos==*ch) {m_CurPos++; return;} }throw std::runtime_error((" unexpected end of file while looking for [" + std::string(ch) + "]").c_str());}
 
   uint32_t GetCurrentLine();
