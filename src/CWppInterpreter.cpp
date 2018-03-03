@@ -23,6 +23,7 @@ KeyWordList_t KeyWords[] = {
   {eTT_KW_float,"float"},
   {eTT_SN_Plus,"+"},
   {eTT_SN_Minus,"-"},
+  {eTT_SN_NotEqualCompare,"!="},
   {eTT_SN_EqualCompare,"=="},  // this must be before the '=' entry otherwise bad things happen !!!
   {eTT_SN_Equal,"="},
   {eTT_SN_Mul,"*"},
@@ -275,7 +276,7 @@ float CMiniInterpreter::EvaluateNumExpression(ETokenType p_Endtoken)
     } else if (totype == eTT_NM_BuiltIn) {
       nextTtype = 'r';
       outputQueue.push_back(oQType(ExecuteBuiltIn(),eTT_ST_NumericValue));
-    } else if ((totype == eTT_SN_LessThan) || (eTT_SN_GreaterThan) || (eTT_SN_EqualCompare)){
+    } else if ((totype == eTT_SN_LessThan) || (totype == eTT_SN_GreaterThan) || (totype == eTT_SN_EqualCompare) || (totype == eTT_SN_NotEqualCompare) )  {
       nextTtype = 'n';
       if (LastPrecedence < 0) {
         tokenStack.push_back(totype);
@@ -332,6 +333,7 @@ float CMiniInterpreter::EvaluateNumExpression(ETokenType p_Endtoken)
         case eTT_SN_LessThan: result = (opb < opa); std::cout << opb << " < " << opa <<  " = " << result << "\n";   break;
         case eTT_SN_GreaterThan: result = (opb > opa); std::cout << opa << " < " << opb <<  " = " << result << "\n";   break;
         case eTT_SN_EqualCompare: result = (opb == opa); std::cout << opa << " == " << opb <<  " = " << result << "\n";   break;
+        case eTT_SN_NotEqualCompare: result = (opb != opa); std::cout << opa << " != " << opb <<  " = " << result << "\n";   break;
         default :
         break;
       }
