@@ -25,6 +25,7 @@ enum ETokenType {
   eTT_SN_Semicolon,
   eTT_SN_LessThan,
   eTT_SN_GreaterThan,
+  eTT_SN_EqualCompare,
   eTT_SN_Zero,
   eTT_KW_RoundParOpen,
   eTT_KW_RoundParClose,
