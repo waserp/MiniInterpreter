@@ -44,7 +44,9 @@ enum ETokenType {
   eTT_NM_UnknownIdentifier,
   eTT_KW_DoubleQuotes,
   eTT_SN_StringConstant,
-  eTT_KW_While
+  eTT_KW_While,
+  eTT_KW_If,
+  eTT_KW_Else
 };
 
 struct functionDescriptor_t {
@@ -78,6 +80,7 @@ private:
   void PushBuiltIns();
   float ExecuteBuiltIn();
   void ExecuteWhile();
+  void ExecuteIf();
   void ExecuteFunction();
   void SkipPair(ETokenType p_Starttoken,ETokenType p_Endtoken, bool p_first = true);
   void FindNext(const char * ch) {while (*m_CurPos!=0){ if (*m_CurPos==*ch) {m_CurPos++; return;} }throw std::runtime_error((" unexpected end of file while looking for [" + std::string(ch) + "]").c_str());}

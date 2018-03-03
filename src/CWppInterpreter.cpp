@@ -40,6 +40,8 @@ KeyWordList_t KeyWords[] = {
   {eTT_KW_BraceClose,"}"},
   {eTT_KW_Function,"function"},
   {eTT_KW_While,"while"},
+  {eTT_KW_If,"if"},
+  {eTT_KW_Else,"else"},
   {eTT_KW_DoubleQuotes,"\""},
   {eTT_SN_LISTEND,""} // mark the end of the list, let this allways at bottom
 };
@@ -460,6 +462,30 @@ void CMiniInterpreter::ExecuteWhile()
   SkipPair(eTT_KW_BraceOpen,eTT_KW_BraceClose);
 }
 
+void CMiniInterpreter::ExecuteIf()
+{
+  bool elseFlag = false;
+  ETokenType totype = GetToken('l');
+  if (totype != eTT_KW_RoundParOpen) {throw std::runtime_error("Error no '(' after 'if'"); }
+  if ( 0 != lrintf(EvaluateNumExpression(eTT_KW_RoundParClose))){
+    std::cout << Colors::violet << m_CurPos << std::endl;
+    if (GetToken('l') != eTT_KW_BraceOpen) {throw std::runtime_error("Error no '{' after 'if()'"); }
+    InterpretCode(m_CurPos, eTT_KW_BraceClose);
+  } else {
+    SkipPair(eTT_KW_BraceOpen,eTT_KW_BraceClose);
+    elseFlag = true;
+  }
+  const char * PosBeforeSearchElse = m_CurPos; // in case we don't find an else we go back to this position
+  totype = GetToken('l');
+  if (totype != eTT_KW_Else) {m_CurPos =PosBeforeSearchElse; return;  }  // // thereis no else after the if
+  if (elseFlag) {
+     if (GetToken('l') != eTT_KW_BraceOpen) {throw std::runtime_error("Error no '{' after 'if()'"); }
+     InterpretCode(m_CurPos, eTT_KW_BraceClose);
+  } else {
+    SkipPair(eTT_KW_BraceOpen,eTT_KW_BraceClose);
+  }
+}
+
 void CMiniInterpreter::SkipPair(ETokenType p_Starttoken,ETokenType p_Endtoken, bool p_first)
 {
   if (p_first) {
@@ -532,6 +558,9 @@ void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)
         break;
         case eTT_NM_BuiltIn: // a built in function call
           ExecuteBuiltIn();
+        break;
+        case eTT_KW_If:
+          ExecuteIf();
         break;
         default :
           throw std::runtime_error(("Error Unexpected token totype[" + std::to_string(totype) + "] Line["+ std::to_string(GetCurrentLine()) +"]\n").c_str());

@@ -18,7 +18,7 @@ bool equalFloat(float a , float b)
   std::cout << "  diff  " << fabs(a-b) << std::endl;
   if (fabs(a-b)<0.0001) {testCountPassed++; return true;}
   std::cout << Colors::red << " ERROR " << " evaluated: " << a << " expected " << b << Colors::white << std::endl;
-  (void) system("read a");
+  std::cout << system("read a");
   exit(-1);
   return false;
 }
@@ -85,18 +85,36 @@ void TestWhileFlowControl() {
 void TestFunctionCalls() {
   CMiniInterpreter interp;
   interp.InterpretCode(" float globVar = 1; function fooNoPar () { print(\"fooNoPar\", globVar ,\"\n\"); globVar = 7; }  fooNoPar(2,3);  print(globVar);  ");
-
+  equalFloat( interp.GetFloatValue("globVar"), 7); // set to 7 in function
   //interp.InterpretCode("  function foo (float cc, float dd) { print(\"fromfoo\",cc,\"\",dd,\"\") return cc + dd; }  foo(2,3);");
   PassedMessage();
 }
 
+void TestIfFlowControl() {
+  CMiniInterpreter interp;
+  interp.InterpretCode(" float globVar = 1; if (globVar==1) { globVar=3; } else { globVar=0; } print(globVar);  ");
+  equalFloat( interp.GetFloatValue("globVar"), 3);
+  interp.InterpretCode(" globVar = 1; if (globVar!=1) { globVar=3; } else { globVar=0; } print(globVar);  ");
+  equalFloat( interp.GetFloatValue("globVar"), 0);
+  interp.InterpretCode("  globVar = 1; if (globVar==1) { globVar=3; print(\"no else case\n\"); }  print(globVar);  ");
+  equalFloat( interp.GetFloatValue("globVar"), 3);
+  interp.InterpretCode("  globVar = 7; if (globVar<7) { globVar=3; print(\"no else case\n\"); }  print( \"if not executed:\", globVar);  ");
+  equalFloat( interp.GetFloatValue("globVar"), 7);
+  interp.InterpretCode("  globVar = 7; float cnt = 3; if (globVar<7) { while (cnt>0) { cnt = cnt -1; print( \"inwhl \"); } } print( \"done\", globVar);  ");
+  equalFloat( interp.GetFloatValue("globVar"), 7);
+  equalFloat( interp.GetFloatValue("cnt"), 3);
+  interp.InterpretCode("  globVar = 7;  cnt = 3; if (globVar<7.08) { while (cnt>0) { cnt = cnt -1; print( \"inwhl \"); } } print( \"done\", globVar);  ");
+  equalFloat( interp.GetFloatValue("cnt"), 0);
+  PassedMessage();
+}
 //float Calculate(std::string p_expression);
 int main(int argc, char **argv)
 {
-  //TestNumericEvaluator();
-  //TestNumericBoleanEvaluator();
-  //TestWhileFlowControl();
+  TestNumericEvaluator();
+  TestNumericBoleanEvaluator();
+  TestWhileFlowControl();
   TestFunctionCalls();
+  TestIfFlowControl();
   EndReport();
 
 /*
