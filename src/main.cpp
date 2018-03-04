@@ -107,6 +107,29 @@ void TestIfFlowControl() {
   equalFloat( interp.GetFloatValue("cnt"), 0);
   PassedMessage();
 }
+
+void TestFloatArrays()
+{
+  CMiniInterpreter interp;
+  interp.InterpretCode(" float[] foo; ");
+  interp.InterpretCode(" foo[7]= 7.12;");
+  interp.InterpretCode(" float a = foo[7] * 3.12;");
+  equalFloat( interp.GetFloatValue("a"), 22.2144);
+  interp.InterpretCode(" float[] data; ");
+  interp.InterpretCode(" data[0] = 1.1; data[1] = 20.4;  data[2] = 300.12; float onV = 0; float cnt = 0; while (cnt<3) {  onV = onV + data[cnt]; cnt = cnt + 1;}   print(onV)");
+  equalFloat( interp.GetFloatValue("onV"), 321.62);
+  interp.InterpretCode(" data[ 1 + 4 * 2] = 88.32; onV = data[9];");
+  equalFloat( interp.GetFloatValue("onV"), 88.32);
+
+
+  interp.InterpretCode(" float[] bad;\n bad[1]= 1;\n bad[2]= 3;\n bad[3]= 1;\n bad[3] = bad[1] + bad[2];\n float enval = bad[3];\n ");
+  equalFloat( interp.GetFloatValue("enval"), 4);
+
+  interp.InterpretCode(" print(\"data=\",data[1234])");
+  PassedMessage();
+}
+
+
 //float Calculate(std::string p_expression);
 int main(int argc, char **argv)
 {
@@ -115,6 +138,7 @@ int main(int argc, char **argv)
   TestWhileFlowControl();
   TestFunctionCalls();
   TestIfFlowControl();
+  TestFloatArrays();
   EndReport();
 
 /*

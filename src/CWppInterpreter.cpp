@@ -43,6 +43,9 @@ KeyWordList_t KeyWords[] = {
   {eTT_KW_If,"if"},
   {eTT_KW_Else,"else"},
   {eTT_KW_DoubleQuotes,"\""},
+  {eTT_SN_ArrayIdentifier,"[]"},
+  {eTT_SN_OpeningBracket,"["},
+  {eTT_SN_ClosingBracket,"]"},
   {eTT_SN_LISTEND,""} // mark the end of the list, let this allways at bottom
 };
 
@@ -148,9 +151,24 @@ bool CMiniInterpreter::TryReadStringConstant()
   return true;
 }
 
+void CMiniInterpreter::ReadArrayIndex(CVariable* p_var, char p_mode)
+{
+  if (!p_var->Is_Array()) { return; }
+  while (isspace(*m_CurPos)) { m_CurPos++; }
+  if (*m_CurPos != '[') { throw std::runtime_error(("Error, expected array index!")); }
+  m_CurPos++;
+  uint32_t index = lrintf(EvaluateNumExpression(eTT_SN_ClosingBracket));
+  if (p_mode == 'L') {
+    p_var->SetArrayWriteIndex(index);
+  } else {
+    p_var->SetArrayIndex(index);
+  }
+
+}
+
 ETokenType CMiniInterpreter::GetToken(const char type)
 {
-    while (isspace(*m_CurPos)) { //(*m_CurPos==' ') || (*m_CurPos=='\t') || (*m_CurPos=='\n') || (*m_CurPos=='\r')) {
+    while (isspace(*m_CurPos)) {
         m_CurPos++; // remove whitespace
     }
 
@@ -176,8 +194,8 @@ ETokenType CMiniInterpreter::GetToken(const char type)
     //printf("search in varspace\n");
     for (auto var : m_VarSpace) { // check if it is a variable
       if ( keyComp(var->m_name.c_str())) {
-        if (type == 'l') { m_lValueVar = var; printf("det Lvar %s\n",var->m_name.c_str()); return eTT_ST_Variable; }
-        else {  m_tokenValue = var->m_valnum; printf("det var %s\n",var->m_name.c_str()); return eTT_ST_NumericValue; } // directly resolve to num value if we are r
+        if (type == 'l') { ReadArrayIndex(var,'L'); m_lValueVar = var; printf("det Lvar %s\n",var->m_name.c_str()); return eTT_ST_Variable; }
+        else { ReadArrayIndex(var); m_tokenValue = var->GetFloatValue(); printf("det var %s\n",var->m_name.c_str()); return eTT_ST_NumericValue; } // directly resolve to num value if we are r
       }
     }
     std::string name;
@@ -355,15 +373,18 @@ float CMiniInterpreter::EvaluateNumExpression(ETokenType p_Endtoken)
 void CMiniInterpreter::CreateVariable(CVariable::eVarType p_VarType)
 {
   CVariable* pVar = new CVariable(p_VarType);
-  GetNewName(pVar->m_name);
-  printf("Variable with name :[%s] created\n",pVar->m_name.c_str());
-  m_VarSpace.push_back(pVar);
   ETokenType totype = GetToken();
+  if ( totype == eTT_SN_ArrayIdentifier) {pVar->SetType(CVariable::eVT_floatArray);totype = GetToken();}
+  if ( totype != eTT_NM_UnknownIdentifier) { throw std::runtime_error("Error expected identifier after float statment!"); }
+  pVar->SetName(m_Unknownidentifier);
+  std::cout << Colors::Iblue << "Variable with name :[" << pVar->m_name.c_str() << "] created of type [" << pVar->GetTypeAsString() << "]" << Colors::white << std::endl;
+  m_VarSpace.push_back(pVar);
+  totype = GetToken();
   if (totype == eTT_SN_Semicolon) { return; } // were done, ok
-  if (totype == eTT_SN_Equal) { pVar->m_valnum = EvaluateNumExpression(eTT_SN_Semicolon); return;}
-  printf("fatal expect Semicolon after Variable definition name[%s] [%i]\n",m_tokenName, totype);
+  if (totype == eTT_SN_Equal) { pVar->SetFloatValue(EvaluateNumExpression(eTT_SN_Semicolon)); return;}
   throw std::runtime_error(("Error fatal expect Semicolon after Variable definition. Variable Name[" + pVar->m_name + "] totype[" + std::to_string(totype) + "] Line["+ std::to_string(GetCurrentLine()) +"]\n").c_str());
 }
+
 void CMiniInterpreter::PreParseFunction()
 {
    std::string funname;
@@ -531,6 +552,7 @@ void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)
     bool statementDone = false;
     while (!statementDone) {
       ETokenType totype = GetToken('l');
+      std::cout << "while after get token " << std::endl;
       if (totype == p_Endtoken) { std::cout << "endtoken found \n"; return;}
       switch (totype) {
         case eTT_KW_float:
@@ -538,7 +560,7 @@ void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)
         break;
         case eTT_ST_Variable:
           if (GetToken('l') != eTT_SN_Equal) {throw std::runtime_error("Error no '=' after variable name"); }
-          m_lValueVar->m_valnum = EvaluateNumExpression(eTT_SN_Semicolon);
+          m_lValueVar->SetFloatValue(EvaluateNumExpression(eTT_SN_Semicolon));
         break;
         case eTT_SN_Zero:
           std::cout << "script exit, processed:" << m_CurPos - m_StartPos << " of " << strlen(p_code) << std::endl;

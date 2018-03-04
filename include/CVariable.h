@@ -19,18 +19,31 @@ class CVariable {
 
     bool GetStackVarFlag() {return m_stackVarFlag;}
 
+    bool Is_Array() { return (m_VarType == eVT_floatArray); }
+    eVarType GetType() { return m_VarType; }
+    const char * GetTypeAsString();
+
   // todo GetString(); GetFloat(); GetArray();
     std::string& GetString();
-    float GetFloatValue() {return m_valnum;}
+    float GetFloatValue();
     void SetType(eVarType p_VarType) { m_VarType = p_VarType; }
-    void SetFloatValue(float p_val) { m_valnum = p_val; }
+    void SetName(std::string& p_name) { m_name = p_name;}
+
+    void SetArrayIndex(uint32_t p_index) { m_index = p_index; }
+    void SetArrayWriteIndex(uint32_t p_index) { m_WriteIndex = p_index; }
+    void SetFloatValue(float p_val);
     void SetStringValue(std::string& p_str) {m_val = p_str; }
 
     eVarType           m_VarType {eVT_undef};
     std::string        m_name;
     std::string        m_val;
-    float              m_valnum {0};
-    std::vector<float> m_arrayValues;
+
+    std::vector<float> m_FloatArrayValues;
+    uint32_t           m_index {0};
+    uint32_t           m_WriteIndex {0};
     bool               m_stackVarFlag {false};
+
+  private:
+    float              m_valnum {0};
 };
 #endif // CVARIABLE_H

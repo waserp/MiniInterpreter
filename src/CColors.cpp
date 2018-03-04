@@ -7,3 +7,4 @@
   const char Colors::white[] = {"\033[0m"};
   const char Colors::blue[]= {"\033[1;34m"};
   const char Colors::violet[]= {"\033[1;35m"};
+  const char Colors::Iblue[]= {"\e[44m"};

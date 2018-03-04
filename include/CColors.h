@@ -8,5 +8,6 @@ namespace Colors {
   extern const char white[];
   extern const char blue[];
   extern const char violet[];
+  extern const char Iblue[];
 }
 #endif // CCOLORS_H

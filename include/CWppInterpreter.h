@@ -24,29 +24,33 @@ enum ETokenType {
   eTT_SN_Mul,
   eTT_SN_Div,
   eTT_SN_Semicolon,
-  eTT_SN_LessThan,
+  eTT_KW_Comma,
+  eTT_SN_LessThan = 20,
   eTT_SN_GreaterThan,
   eTT_SN_EqualCompare,
   eTT_SN_NotEqualCompare,
   eTT_SN_Zero,
-  eTT_KW_RoundParOpen,
+  eTT_KW_RoundParOpen = 30,
   eTT_KW_RoundParClose,
   eTT_KW_BraceOpen,
   eTT_KW_BraceClose,
   eTT_ST_NumericValue,
-  eTT_ST_Variable,
+  eTT_ST_Variable = 40,
   eTT_KW_Function,
   eTT_SN_FunctionName,
   eTT_NM_Function,
   eTT_NM_BuiltIn,
   eTT_KW_DontCare,
-  eTT_KW_Comma,
+
   eTT_NM_UnknownIdentifier,
   eTT_KW_DoubleQuotes,
   eTT_SN_StringConstant,
-  eTT_KW_While,
+  eTT_KW_While  = 60,
   eTT_KW_If,
-  eTT_KW_Else
+  eTT_KW_Else,
+  eTT_SN_OpeningBracket,
+  eTT_SN_ClosingBracket,
+  eTT_SN_ArrayIdentifier
 };
 
 struct functionDescriptor_t {
@@ -64,8 +68,8 @@ class CMiniInterpreter {
     void InterpretCode(const char * p_code, ETokenType p_Endtoken = eTT_SN_Zero);
 
     float EvaluateNumExpression(const char * p_expression);
-    void PreloadVariable(const char * p_varname, float p_val) { CVariable* pv = new CVariable(CVariable::eVT_float); pv->m_name = p_varname; pv->m_valnum = p_val;m_VarSpace.push_back(pv);  }
-    float GetFloatValue(const char * p_varname) { for(auto&var:m_VarSpace){ if(0==var->m_name.compare(p_varname)) {return var->m_valnum;} } return nanf("");}
+    void PreloadVariable(const char * p_varname, float p_val) { CVariable* pv = new CVariable(CVariable::eVT_float); pv->m_name = p_varname; pv->SetFloatValue(p_val);m_VarSpace.push_back(pv);  }
+    float GetFloatValue(const char * p_varname) { for(auto&var:m_VarSpace){ if(0==var->m_name.compare(p_varname)) {return var->GetFloatValue();} } return nanf("");}
 
     void InsertFunPointer(std::string p_funname, functionDescriptor_t* fundes) {
         if (m_FunSpace.end() != m_FunSpace.find(p_funname)) { throw std::runtime_error(("duplicate function name [" + p_funname + "]").c_str()); };
@@ -91,6 +95,7 @@ private:
   void GetNewName(std::string& p_name);
   float EvaluateNumExpression(ETokenType p_Endtoken);
   bool TryReadNumber();
+  void ReadArrayIndex(CVariable* p_var, char p_mode = 'R');
   ETokenType GetToken(const char type = 'l');
   bool keyComp(const char * p_keyword);
 
