@@ -384,6 +384,20 @@ std::string CMiniInterpreter::EvaluateStringExpression(ETokenType p_Endtoken)
   return a;
 }
 
+ETokenType CMiniInterpreter::GetNextOf(ETokenType a, ETokenType b)
+{
+  const char * p = m_CurPos;
+  ETokenType to;
+  do {
+    to = GetToken();
+    if (to == eTT_SN_Zero) {
+      throw std::runtime_error("Error unexpected end of file!");
+    }
+  } while ((to != a) && (to != b));
+  m_CurPos = p;
+  return to;
+}
+
 void CMiniInterpreter::CreateVariable(CVariable::eVarType p_VarType)
 {
   CVariable* pVar = new CVariable(p_VarType);
@@ -407,6 +421,17 @@ void CMiniInterpreter::CreateVariable(CVariable::eVarType p_VarType)
       case CVariable::eVT_float: pVar->SetFloatValue(EvaluateNumExpression(eTT_SN_Semicolon));
       break;
       case CVariable::eVT_floatArray:
+      {
+        if ( GetToken() != eTT_SN_OpeningBracket) { throw std::runtime_error("Error expected array initializer i.e. [1,2,3] after float[] = statment!"); }
+        uint32_t index = 0;
+        do {
+          totype = GetNextOf(eTT_SN_ClosingBracket,eTT_KW_Comma);
+          pVar->SetArrayWriteIndex(index);
+          pVar->SetFloatValue(EvaluateNumExpression(totype));
+          index++;
+        }
+        while (totype != eTT_SN_ClosingBracket);
+      }
       break;
       case CVariable::eVT_string: pVar->SetStringValue(EvaluateStringExpression(eTT_SN_Semicolon));
       break;
@@ -507,14 +532,14 @@ void CMiniInterpreter::ExecuteWhile()
   ETokenType totype = GetToken('l');
   if (totype != eTT_KW_RoundParOpen) {throw std::runtime_error("Error no '(' after 'while'"); }
   const char * BeginOfExpression = m_CurPos;
-  std::cout << "\n     dump before entry >" << m_CurPos;
+  //std::cout << "\n     dump before entry >" << m_CurPos;
   while ( 0 != lrintf(EvaluateNumExpression(eTT_KW_RoundParClose))) {
     if (GetToken('l') != eTT_KW_BraceOpen) {throw std::runtime_error("Error no '{' after 'while (..)'"); }
     InterpretCode(m_CurPos, eTT_KW_BraceClose);
     m_CurPos = BeginOfExpression; // back to begin if expression
-    std::cout << "\n     dump end of loop >" << m_CurPos;
+    //std::cout << "\n     dump end of loop >" << m_CurPos;
   }
-  std::cout << "\n     dump after while loop >" << m_CurPos;
+  //std::cout << "\n     dump after while loop >" << m_CurPos;
   SkipPair(eTT_KW_BraceOpen,eTT_KW_BraceClose);
 }
 
@@ -524,7 +549,7 @@ void CMiniInterpreter::ExecuteIf()
   ETokenType totype = GetToken('l');
   if (totype != eTT_KW_RoundParOpen) {throw std::runtime_error("Error no '(' after 'if'"); }
   if ( 0 != lrintf(EvaluateNumExpression(eTT_KW_RoundParClose))){
-    std::cout << Colors::violet << m_CurPos << std::endl;
+    //std::cout << Colors::violet << m_CurPos << std::endl;
     if (GetToken('l') != eTT_KW_BraceOpen) {throw std::runtime_error("Error no '{' after 'if()'"); }
     InterpretCode(m_CurPos, eTT_KW_BraceClose);
   } else {
@@ -587,7 +612,7 @@ void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)
     bool statementDone = false;
     while (!statementDone) {
       ETokenType totype = GetToken('l');
-      std::cout << "while after get token " << std::endl;
+      //std::cout << "while after get token " << std::endl;
       if (totype == p_Endtoken) { std::cout << "endtoken found \n"; return;}
       switch (totype) {
         case eTT_KW_float:
@@ -606,11 +631,11 @@ void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)
           }
         break;
         case eTT_SN_Zero:
-          std::cout << "script exit, processed:" << m_CurPos - m_StartPos << " of " << strlen(p_code) << std::endl;
+          //std::cout << "script exit, processed:" << m_CurPos - m_StartPos << " of " << strlen(p_code) << std::endl;
           return;
         break;
         case eTT_SN_Semicolon: // stray semicolon
-          std::cout << "unused semicolon" << std::endl;
+          //std::cout << "unused semicolon" << std::endl;
         break;
         case eTT_KW_Function: // a function definition
           PreParseFunction();
@@ -632,7 +657,7 @@ void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)
           return;
         break;
       }
-      printf("Gettoken result %i  %s \n",totype, m_tokenName);
+      //printf("Gettoken result %i  %s \n",totype, m_tokenName);
       //if (totype == eTT_SN_Semicolon) {statementDone = true;}
     }
 }

@@ -15,7 +15,7 @@ static uint32_t testSetsPassed = 0;
 
 bool equalFloat(float a , float b)
 {
-  std::cout << "  diff  " << fabs(a-b) << std::endl;
+  //std::cout << "  diff  " << fabs(a-b) << std::endl;
   if (fabs(a-b)<0.0001) {testCountPassed++; return true;}
   std::cout << Colors::red << " ERROR " << " evaluated: " << a << " expected " << b << Colors::white << std::endl;
   std::cout << system("read a");
@@ -145,6 +145,36 @@ void TestStrings()
   PassedMessage();
 }
 
+void TestFloatArrayInitializers()
+{
+  CMiniInterpreter interp;
+  interp.InterpretCode(" float[] data = [1,3 * 7 + 1,2.3,8]; print(\"data=\",data[-1]);\n float a0 = data[0];float a1 = data[1];float a2 = data[2];float a3 = data[3];");
+  equalFloat( interp.GetFloatValue("a0"), 1);
+  equalFloat( interp.GetFloatValue("a1"), 22);
+  equalFloat( interp.GetFloatValue("a2"), 2.3);
+  equalFloat( interp.GetFloatValue("a3"), 8);
+  PassedMessage();
+}
+
+float SampleMoveXY(std::vector<CVariable*>& plist)
+{
+  std::cout << "Sample Fun Called with parameter:";
+  for (auto p : plist) {
+    std::cout << p->GetString() << " ";
+  }
+  std::cout << "\n";
+  return 0.0F;
+}
+
+void TestRegisterCustomBuiltInFun()
+{
+  CMiniInterpreter interp;
+  interp.RegisterCustomBuiltIn("MoveXY", SampleMoveXY);
+  interp.InterpretCode(" float zz=3.2;  MoveXY(\"A11\",34,zz );");
+  PassedMessage();
+}
+
+
 //float Calculate(std::string p_expression);
 int main(int argc, char **argv)
 {
@@ -155,6 +185,8 @@ int main(int argc, char **argv)
   TestIfFlowControl();
   TestFloatArrays();
   TestStrings();
+  TestFloatArrayInitializers();
+  TestRegisterCustomBuiltInFun();
   EndReport();
 
 /*

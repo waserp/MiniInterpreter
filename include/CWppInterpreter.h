@@ -59,11 +59,15 @@ struct functionDescriptor_t {
 };
 
 
+
 class CMiniInterpreter {
   public:
     CMiniInterpreter();
     ~CMiniInterpreter();
+
     typedef std::function<float(std::vector<CVariable*>&)> BuiltInfunction_t;
+
+    void RegisterCustomBuiltIn(std::string p_name, BuiltInfunction_t p_fun)    {      m_BuiltInFunMap[p_name] = p_fun;    }
 
     void InterpretCode(const char * p_code, ETokenType p_Endtoken = eTT_SN_Zero);
 
@@ -86,6 +90,7 @@ private:
   void ExecuteWhile();
   void ExecuteIf();
   void ExecuteFunction();
+  ETokenType GetNextOf(ETokenType a, ETokenType b);
   void SkipPair(ETokenType p_Starttoken,ETokenType p_Endtoken, bool p_first = true);
   void FindNext(const char * ch) {while (*m_CurPos!=0){ if (*m_CurPos==*ch) {m_CurPos++; return;} }throw std::runtime_error((" unexpected end of file while looking for [" + std::string(ch) + "]").c_str());}
 
