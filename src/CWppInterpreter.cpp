@@ -100,7 +100,7 @@ bool CMiniInterpreter::keyComp(const char * p_keyword)
   m_tokenName = p_keyword;
   if (!isalnum(p_keyword[0])) { m_CurPos = pt; return true; } // keywords like "+" "-" etc can be followed by letters i.e. a=b+c
   if (!isalnum(*pt)) { m_CurPos = pt; return true; }           // keywords like "float" can not be followed by letters i.e. floatFoo is not keyword float
-  printf(" pt = %c isalnum = %i",*pt,isalnum(*pt));
+  //printf(" pt = %c isalnum = %i",*pt,isalnum(*pt));
   return false;
 }
 
@@ -119,7 +119,7 @@ bool CMiniInterpreter::TryReadNumber()
   if (!DigitFlag) {return false;}  // we need at least a single digit, if there is none this is not a number
   m_tokenValue = atof(m_CurPos);
   m_CurPos = pt;
-  printf("try read number success [%f] \n",m_tokenValue);
+  //printf("try read number success [%f] \n",m_tokenValue);
   return true;
 }
 
@@ -186,7 +186,7 @@ ETokenType CMiniInterpreter::GetToken(const char type)
     KeyWordList_t* pkwl = KeyWords;
     while (pkwl->token != eTT_SN_LISTEND) { //printf(" compare to -->%s\n",pkwl->name);
       if (keyComp(pkwl->name)) {
-        printf("found token -->%s %i\n",pkwl->name,pkwl->token);
+        //printf("found token -->%s %i\n",pkwl->name,pkwl->token);
         return pkwl->token;
       }
       pkwl++;
@@ -200,14 +200,14 @@ ETokenType CMiniInterpreter::GetToken(const char type)
     }
     std::string name;
     if (TryReadName(name)) {  // we got some sort of name
-      std::cout << " TryReadName succcess  found [" << name << "]" << std::endl;
+      //std::cout << " TryReadName succcess  found [" << name << "]" << std::endl;
       auto it = m_BuiltInFunMap.find(name);
-      if (it != m_BuiltInFunMap.end()) { std::cout << " Build In found found " << name << std::endl;
+      if (it != m_BuiltInFunMap.end()) { //std::cout << " Build In found found " << name << std::endl;
         m_LastBuiltInFunction = it->second;
         return eTT_NM_BuiltIn;
       }
       auto itf = m_FunSpace.find(name);
-      if (itf != m_FunSpace.end()) {  std::cout << " function name found " << name << std::endl;
+      if (itf != m_FunSpace.end()) {  //std::cout << " function name found " << name << std::endl;
         m_LastFunctionDescriptor = itf->second;
         return eTT_SN_FunctionName;
       }
@@ -517,7 +517,7 @@ float CMiniInterpreter::ExecuteBuiltIn()
       }
       totype = GetToken('l');
     }
-    std::cout << "execute the function " << std::endl;
+    //std::cout << "execute the function " << std::endl;
     m_tokenValue = m_LastBuiltInFunction(paramList);
     // now delete specialy created vars
     for (auto par: paramList) {
@@ -606,7 +606,7 @@ void CMiniInterpreter::ExecuteFunction()
 
 void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)
 {
-    printf("%s",p_code);
+    //printf("%s",p_code);
     m_CurPos = p_code;
     m_StartPos = p_code;
     bool statementDone = false;
