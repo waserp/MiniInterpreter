@@ -23,7 +23,13 @@ bool equalFloat(float a , float b)
   return false;
 }
 
-
+bool equalString(std::string a, std::string b)
+{
+  if (a.compare(b)== 0) { testCountPassed++; return true;}
+  std::cout << Colors::red << " ERROR " << " evaluated: " << a << " expected " << b << Colors::white << std::endl;
+  exit(-1);
+  return false;
+}
 
 
 #define PassedMessage() std::cout << Colors::green << __func__  << ": Number of Tests passed: " << testCountPassed << Colors::white << std::endl; TotaltestCountPassed += testCountPassed; testCountPassed = 0; testSetsPassed+=1;
@@ -129,6 +135,15 @@ void TestFloatArrays()
   PassedMessage();
 }
 
+void TestStrings()
+{
+  CMiniInterpreter interp;
+  interp.InterpretCode(" string name; string color = \"green\"; string abc = \"aa\" \"bb\" ,\"cc\" color; ");
+  equalString(interp.GetStringValue("color"),"green");
+  equalString(interp.GetStringValue("abc"),"aabbccgreen");
+  interp.InterpretCode(" float zz = 1.1; abc = abc + zz; print(abc); ");
+  PassedMessage();
+}
 
 //float Calculate(std::string p_expression);
 int main(int argc, char **argv)
@@ -139,6 +154,7 @@ int main(int argc, char **argv)
   TestFunctionCalls();
   TestIfFlowControl();
   TestFloatArrays();
+  TestStrings();
   EndReport();
 
 /*

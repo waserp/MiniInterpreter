@@ -369,19 +369,54 @@ float CMiniInterpreter::EvaluateNumExpression(ETokenType p_Endtoken)
   }
   return result;
 }
+std::string CMiniInterpreter::EvaluateStringExpression(ETokenType p_Endtoken)
+{
+  std::string a;
+  ETokenType totype = GetToken();
+  while (totype!=p_Endtoken) {
+    if (totype == eTT_SN_StringConstant) {
+      a += m_StringConstant;
+    } else if (totype == eTT_ST_Variable) {
+      a += m_lValueVar->GetString();
+    }
+    totype = GetToken();
+  }
+  return a;
+}
 
 void CMiniInterpreter::CreateVariable(CVariable::eVarType p_VarType)
 {
   CVariable* pVar = new CVariable(p_VarType);
   ETokenType totype = GetToken();
-  if ( totype == eTT_SN_ArrayIdentifier) {pVar->SetType(CVariable::eVT_floatArray);totype = GetToken();}
+  if ( totype == eTT_SN_ArrayIdentifier) {
+    if (p_VarType == CVariable::eVT_float) {
+      pVar->SetType(CVariable::eVT_floatArray);
+    } else {
+      pVar->SetType(CVariable::eVT_stringArray);
+    }
+    totype = GetToken();
+  }
   if ( totype != eTT_NM_UnknownIdentifier) { throw std::runtime_error("Error expected identifier after float statment!"); }
   pVar->SetName(m_Unknownidentifier);
   std::cout << Colors::Iblue << "Variable with name :[" << pVar->m_name.c_str() << "] created of type [" << pVar->GetTypeAsString() << "]" << Colors::white << std::endl;
   m_VarSpace.push_back(pVar);
   totype = GetToken();
   if (totype == eTT_SN_Semicolon) { return; } // were done, ok
-  if (totype == eTT_SN_Equal) { pVar->SetFloatValue(EvaluateNumExpression(eTT_SN_Semicolon)); return;}
+  if (totype == eTT_SN_Equal) {
+    switch (pVar->GetType()) {
+      case CVariable::eVT_float: pVar->SetFloatValue(EvaluateNumExpression(eTT_SN_Semicolon));
+      break;
+      case CVariable::eVT_floatArray:
+      break;
+      case CVariable::eVT_string: pVar->SetStringValue(EvaluateStringExpression(eTT_SN_Semicolon));
+      break;
+      case CVariable::eVT_stringArray:
+      break;
+      default :
+      break;
+    }
+    return;
+  }
   throw std::runtime_error(("Error fatal expect Semicolon after Variable definition. Variable Name[" + pVar->m_name + "] totype[" + std::to_string(totype) + "] Line["+ std::to_string(GetCurrentLine()) +"]\n").c_str());
 }
 
@@ -558,9 +593,17 @@ void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)
         case eTT_KW_float:
           CreateVariable(CVariable::eVT_float);
         break;
+        case eTT_KW_StringDesignator:
+          CreateVariable(CVariable::eVT_string);
+        break;
         case eTT_ST_Variable:
           if (GetToken('l') != eTT_SN_Equal) {throw std::runtime_error("Error no '=' after variable name"); }
-          m_lValueVar->SetFloatValue(EvaluateNumExpression(eTT_SN_Semicolon));
+          if ((m_lValueVar->GetType() == CVariable::eVT_float) || (m_lValueVar->GetType() == CVariable::eVT_floatArray)) {
+            m_lValueVar->SetFloatValue(EvaluateNumExpression(eTT_SN_Semicolon));
+          } else {
+            CVariable* lp = m_lValueVar;
+            lp->SetStringValue(EvaluateStringExpression(eTT_SN_Semicolon));
+          }
         break;
         case eTT_SN_Zero:
           std::cout << "script exit, processed:" << m_CurPos - m_StartPos << " of " << strlen(p_code) << std::endl;

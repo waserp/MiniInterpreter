@@ -70,7 +70,7 @@ class CMiniInterpreter {
     float EvaluateNumExpression(const char * p_expression);
     void PreloadVariable(const char * p_varname, float p_val) { CVariable* pv = new CVariable(CVariable::eVT_float); pv->m_name = p_varname; pv->SetFloatValue(p_val);m_VarSpace.push_back(pv);  }
     float GetFloatValue(const char * p_varname) { for(auto&var:m_VarSpace){ if(0==var->m_name.compare(p_varname)) {return var->GetFloatValue();} } return nanf("");}
-
+    std::string GetStringValue(const char * p_varname) { for(auto&var:m_VarSpace){ if(0==var->m_name.compare(p_varname)) {return var->GetString();} } return std::string("string not found");}
     void InsertFunPointer(std::string p_funname, functionDescriptor_t* fundes) {
         if (m_FunSpace.end() != m_FunSpace.find(p_funname)) { throw std::runtime_error(("duplicate function name [" + p_funname + "]").c_str()); };
           m_FunSpace[p_funname] = fundes;
@@ -94,6 +94,7 @@ private:
   void PreParseFunction();
   void GetNewName(std::string& p_name);
   float EvaluateNumExpression(ETokenType p_Endtoken);
+  std::string EvaluateStringExpression(ETokenType p_Endtoken);
   bool TryReadNumber();
   void ReadArrayIndex(CVariable* p_var, char p_mode = 'R');
   ETokenType GetToken(const char type = 'l');

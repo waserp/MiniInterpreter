@@ -13,7 +13,8 @@ class CVariable {
       eVT_undef,
       eVT_float,
       eVT_floatArray,
-      eVT_string
+      eVT_string,
+      eVT_stringArray
     };
     CVariable(eVarType p_VarType, bool p_StackVarFlag = false) :m_VarType(p_VarType),m_stackVarFlag(p_StackVarFlag){}
 
@@ -32,7 +33,7 @@ class CVariable {
     void SetArrayIndex(uint32_t p_index) { m_index = p_index; }
     void SetArrayWriteIndex(uint32_t p_index) { m_WriteIndex = p_index; }
     void SetFloatValue(float p_val);
-    void SetStringValue(std::string& p_str) {m_val = p_str; }
+    void SetStringValue(std::string p_str) {m_val = p_str; }
 
     eVarType           m_VarType {eVT_undef};
     std::string        m_name;
