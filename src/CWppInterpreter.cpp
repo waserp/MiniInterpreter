@@ -59,6 +59,7 @@ CMiniInterpreter::CMiniInterpreter()
 
 CMiniInterpreter::~CMiniInterpreter()
 {
+  Clean();
 }
 
 void ParChecker(const uint32_t p_count, const char * p_name, std::vector<CVariable*>& parVec)
@@ -71,6 +72,62 @@ void CMiniInterpreter::PushBuiltIns()
   m_BuiltInFunMap["print"] = [](std::vector<CVariable*>& parVec){ std::cout << Colors::yellow; for (auto pPar : parVec) { std::cout << pPar->GetString(); }  std::cout << Colors::white; return 0.0F;};
   m_BuiltInFunMap["sin"] = [](std::vector<CVariable*>& parVec){ std::cout << Colors::green << "fun sinus:" << sin(parVec[0]->GetFloatValue()) << Colors::white; return sin(parVec[0]->GetFloatValue());};
   //m_BuiltInFunMap["max"] = [](std::vector<CVariable*>& parVec){ float val; for (auto pPar : parVec) {  }  return 0.0F;};
+}
+
+
+/*    #    ##    #####      #      ##    #####   #       ######   ####
+ #    #   #  #   #    #     #     #  #   #    #  #       #       #
+ #    #  #    #  #    #     #    #    #  #####   #       #####    ####
+ #    #  ######  #####      #    ######  #    #  #       #            #
+  #  #   #    #  #   #      #    #    #  #    #  #       #       #    #
+   ##    #    #  #    #     #    #    #  #####   ######  ######   ####*/
+
+
+void CMiniInterpreter::CreateVariable(CVariable::eVarType p_VarType)
+{
+  CVariable* pVar = new CVariable(p_VarType);
+  ETokenType totype = GetToken();
+  if ( totype == eTT_SN_ArrayIdentifier) {
+    if (p_VarType == CVariable::eVT_float) {
+      pVar->SetType(CVariable::eVT_floatArray);
+    } else {
+      pVar->SetType(CVariable::eVT_stringArray);
+    }
+    totype = GetToken();
+  }
+  if ( totype != eTT_NM_UnknownIdentifier) { throw std::runtime_error("Error expected identifier after float statment!"); }
+  pVar->SetName(m_Unknownidentifier);
+  std::cout << Colors::Iblue << "Variable with name :[" << pVar->m_name.c_str() << "] created of type [" << pVar->GetTypeAsString() << "]" << Colors::white << std::endl;
+  m_VarSpace.push_back(pVar);
+  totype = GetToken();
+  if (totype == eTT_SN_Semicolon) { return; } // were done, ok
+  if (totype == eTT_SN_Equal) {
+    switch (pVar->GetType()) {
+      case CVariable::eVT_float: pVar->SetFloatValue(EvaluateNumExpression(eTT_SN_Semicolon));
+      break;
+      case CVariable::eVT_floatArray:
+      {
+        if ( GetToken() != eTT_SN_OpeningBracket) { throw std::runtime_error("Error expected array initializer i.e. [1,2,3] after float[] = statment!"); }
+        uint32_t index = 0;
+        do {
+          totype = GetNextOf(eTT_SN_ClosingBracket,eTT_KW_Comma);
+          pVar->SetArrayWriteIndex(index);
+          pVar->SetFloatValue(EvaluateNumExpression(totype));
+          index++;
+        }
+        while (totype != eTT_SN_ClosingBracket);
+      }
+      break;
+      case CVariable::eVT_string: pVar->SetStringValue(EvaluateStringExpression(eTT_SN_Semicolon));
+      break;
+      case CVariable::eVT_stringArray:
+      break;
+      default :
+      break;
+    }
+    return;
+  }
+  throw std::runtime_error(("Error fatal expect Semicolon after Variable definition. Variable Name[" + pVar->m_name + "] totype[" + std::to_string(totype) + "] Line["+ std::to_string(GetCurrentLine()) +"]\n").c_str());
 }
 
 void CMiniInterpreter::Clean()
@@ -130,6 +187,13 @@ CVariable* CMiniInterpreter::FindExistingVariable(const char * p_name)
     }
   }
   return nullptr;
+}
+
+std::string CMiniInterpreter::GetStringValue(const char * p_varname)
+{
+  CVariable* pv =FindExistingVariable(p_varname);
+  return pv->GetString();
+  return std::string("string not found");
 }
 
 
@@ -224,6 +288,14 @@ void CMiniInterpreter::ReadArrayIndex(CVariable* p_var, char p_mode)
 
 }
 
+
+/*####   ######   #####   #####   ####   #    #  ######  #    #
+ #    #  #          #       #    #    #  #   #   #       ##   #
+ #       #####      #       #    #    #  ####    #####   # #  #
+ #  ###  #          #       #    #    #  #  #    #       #  # #
+ #    #  #          #       #    #    #  #   #   #       #   ##
+  ####   ######     #       #     ####   #    #  ######  #    # */
+
 ETokenType CMiniInterpreter::GetToken(const char type)
 {
     while (isspace(*m_CurPos)) {
@@ -299,6 +371,15 @@ void CMiniInterpreter::GetNewName(std::string& p_name)
 }
 
 
+/*#####  #    #    ##    #       #    #    ##     #####  ######          #    #
+ #       #    #   #  #   #       #    #   #  #      #    #               ##   #
+ #####   #    #  #    #  #       #    #  #    #     #    #####   #####   # #  #
+ #       #    #  ######  #       #    #  ######     #    #               #  # #
+ #        #  #   #    #  #       #    #  #    #     #    #               #   ##
+ ######    ##    #    #  ######   ####   #    #     #    ######          #    #*/
+
+
+
 float CMiniInterpreter::EvaluateNumExpression(const char * p_expression)
 {
   m_CurPos = p_expression;
@@ -307,14 +388,6 @@ float CMiniInterpreter::EvaluateNumExpression(const char * p_expression)
   return EvaluateNumExpression(eTT_SN_Semicolon);
 }
 
-
-
-/*
-Example with negative numbers:  5      +     -3      ;
-                                <num>  <op>  <num>
-
-
-*/
 
 // https://github.com/cparse/cparse
 // read this --> https://en.wikipedia.org/wiki/Shunting-yard_algorithm
@@ -456,51 +529,20 @@ ETokenType CMiniInterpreter::GetNextOf(ETokenType a, ETokenType b)
   return to;
 }
 
-void CMiniInterpreter::CreateVariable(CVariable::eVarType p_VarType)
+
+/*#####  #    #  #    #   ####    #####     #     ####   #    #
+ #       #    #  ##   #  #    #     #       #    #    #  ##   #
+ #####   #    #  # #  #  #          #       #    #    #  # #  #
+ #       #    #  #  # #  #          #       #    #    #  #  # #
+ #       #    #  #   ##  #    #     #       #    #    #  #   ##
+ #        ####   #    #   ####      #       #     ####   #    #*/
+
+void CMiniInterpreter::InsertFunPointer(std::string p_funname, functionDescriptor_t* fundes)
 {
-  CVariable* pVar = new CVariable(p_VarType);
-  ETokenType totype = GetToken();
-  if ( totype == eTT_SN_ArrayIdentifier) {
-    if (p_VarType == CVariable::eVT_float) {
-      pVar->SetType(CVariable::eVT_floatArray);
-    } else {
-      pVar->SetType(CVariable::eVT_stringArray);
-    }
-    totype = GetToken();
-  }
-  if ( totype != eTT_NM_UnknownIdentifier) { throw std::runtime_error("Error expected identifier after float statment!"); }
-  pVar->SetName(m_Unknownidentifier);
-  std::cout << Colors::Iblue << "Variable with name :[" << pVar->m_name.c_str() << "] created of type [" << pVar->GetTypeAsString() << "]" << Colors::white << std::endl;
-  m_VarSpace.push_back(pVar);
-  totype = GetToken();
-  if (totype == eTT_SN_Semicolon) { return; } // were done, ok
-  if (totype == eTT_SN_Equal) {
-    switch (pVar->GetType()) {
-      case CVariable::eVT_float: pVar->SetFloatValue(EvaluateNumExpression(eTT_SN_Semicolon));
-      break;
-      case CVariable::eVT_floatArray:
-      {
-        if ( GetToken() != eTT_SN_OpeningBracket) { throw std::runtime_error("Error expected array initializer i.e. [1,2,3] after float[] = statment!"); }
-        uint32_t index = 0;
-        do {
-          totype = GetNextOf(eTT_SN_ClosingBracket,eTT_KW_Comma);
-          pVar->SetArrayWriteIndex(index);
-          pVar->SetFloatValue(EvaluateNumExpression(totype));
-          index++;
-        }
-        while (totype != eTT_SN_ClosingBracket);
-      }
-      break;
-      case CVariable::eVT_string: pVar->SetStringValue(EvaluateStringExpression(eTT_SN_Semicolon));
-      break;
-      case CVariable::eVT_stringArray:
-      break;
-      default :
-      break;
-    }
-    return;
-  }
-  throw std::runtime_error(("Error fatal expect Semicolon after Variable definition. Variable Name[" + pVar->m_name + "] totype[" + std::to_string(totype) + "] Line["+ std::to_string(GetCurrentLine()) +"]\n").c_str());
+  if (m_FunSpace.end() != m_FunSpace.find(p_funname)) {
+    throw std::runtime_error(("duplicate function name [" + p_funname + "]").c_str());
+  };
+  m_FunSpace[p_funname] = fundes;
 }
 
 void CMiniInterpreter::PreParseFunction()
@@ -583,7 +625,12 @@ float CMiniInterpreter::ExecuteBuiltIn()
     }
     return m_tokenValue;
 }
-
+/*    #  #    #     #    #       ######
+ #    #  #    #     #    #       #
+ #    #  ######     #    #       #####
+ # ## #  #    #     #    #       #
+ ##  ##  #    #     #    #       #
+ #    #  #    #     #    ######  ######*/
 
 void CMiniInterpreter::ExecuteWhile()
 {
@@ -660,6 +707,7 @@ void CMiniInterpreter::ExecuteFunction()
   m_ParameterVariableMap = backup;
   m_CurPos = backupPosition; // continiue at old position
 }
+
 
 
 void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)

@@ -62,19 +62,33 @@ struct functionDescriptor_t {
 
 class CMiniInterpreter {
   public:
-    CMiniInterpreter();
-    ~CMiniInterpreter();
 
+    /// Built in Function definition
     typedef std::function<float(std::vector<CVariable*>&)> BuiltInfunction_t;
 
-    void RegisterCustomBuiltIn(std::string p_name, BuiltInfunction_t p_fun)    {      m_BuiltInFunMap[p_name] = p_fun;    }
+    /// Constructor, registers the built in functions
+    CMiniInterpreter();
 
+    /// Destructor, deletes all allocated memory
+    ~CMiniInterpreter();
+
+    /// Executes Code
+    /// @param[in] p_code code to execute
+    /// @param[in] p_Endtoken the endtoken
     void InterpretCode(const char * p_code, ETokenType p_Endtoken = eTT_SN_Zero);
 
+    /// Evaluate the numeric expression i.e. EvaluateNumExpression(" 1 + 3 * 2"); returns 7
+    /// @param[in] p_expression the expression to be evaluated
+    /// @return the value
     float EvaluateNumExpression(const char * p_expression);
 
     /// Deletes all variables, and function pointers, BUT not the built in Functions
     void Clean();
+
+    /// Register built in functions into map
+    /// @param[in] p_name function name
+    /// @param[in] p_fun function pointer
+    void RegisterCustomBuiltIn(std::string p_name, BuiltInfunction_t p_fun)    {      m_BuiltInFunMap[p_name] = p_fun;    }
 
     /// Create or if it already exists update the value of a variable
     /// @param[in] p_varname name of the variable to create
@@ -88,13 +102,17 @@ class CMiniInterpreter {
 
     /// Read the Value of a float Variable from the varspace
     /// @param[in] p_varname name of the variable
+    /// @return the value
     float GetFloatValue(const char * p_varname);
-    std::string GetStringValue(const char * p_varname) { for(auto&var:m_VarSpace){ if(0==var->m_name.compare(p_varname)) {return var->GetString();} } return std::string("string not found");}
-    void InsertFunPointer(std::string p_funname, functionDescriptor_t* fundes) {
-        if (m_FunSpace.end() != m_FunSpace.find(p_funname)) { throw std::runtime_error(("duplicate function name [" + p_funname + "]").c_str()); };
-          m_FunSpace[p_funname] = fundes;
-        }
 
+    /// Read the Value of a string Variable from the varspace
+    /// @param[in] p_varname name of the variable
+    /// @return the value
+    std::string GetStringValue(const char * p_varname);
+
+    /// Insert a function pointer into the map
+    /// a function is an in-script defined function
+    void InsertFunPointer(std::string p_funname, functionDescriptor_t* fundes);
 
 private:
   bool TryReadName(std::string& name);
