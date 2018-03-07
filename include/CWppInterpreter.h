@@ -72,8 +72,23 @@ class CMiniInterpreter {
     void InterpretCode(const char * p_code, ETokenType p_Endtoken = eTT_SN_Zero);
 
     float EvaluateNumExpression(const char * p_expression);
-    void PreloadVariable(const char * p_varname, float p_val) { CVariable* pv = new CVariable(CVariable::eVT_float); pv->m_name = p_varname; pv->SetFloatValue(p_val);m_VarSpace.push_back(pv);  }
-    float GetFloatValue(const char * p_varname) { for(auto&var:m_VarSpace){ if(0==var->m_name.compare(p_varname)) {return var->GetFloatValue();} } return nanf("");}
+
+    /// Deletes all variables, and function pointers, BUT not the built in Functions
+    void Clean();
+
+    /// Create or if it already exists update the value of a variable
+    /// @param[in] p_varname name of the variable to create
+    /// @param[in] p_val float value
+    bool PreloadVariable(const char * p_varname, float p_val);
+
+    /// Create or if it already exists update the value of a variable
+    /// @param[in] p_varname name of the variable to create
+    /// @param[in] p_val string value
+    bool PreloadVariable(const char * p_varname, std::string p_val);
+
+    /// Read the Value of a float Variable from the varspace
+    /// @param[in] p_varname name of the variable
+    float GetFloatValue(const char * p_varname);
     std::string GetStringValue(const char * p_varname) { for(auto&var:m_VarSpace){ if(0==var->m_name.compare(p_varname)) {return var->GetString();} } return std::string("string not found");}
     void InsertFunPointer(std::string p_funname, functionDescriptor_t* fundes) {
         if (m_FunSpace.end() != m_FunSpace.find(p_funname)) { throw std::runtime_error(("duplicate function name [" + p_funname + "]").c_str()); };
@@ -104,11 +119,12 @@ private:
   void ReadArrayIndex(CVariable* p_var, char p_mode = 'R');
   ETokenType GetToken(const char type = 'l');
   bool keyComp(const char * p_keyword);
+  CVariable* FindExistingVariable(const char * p_name);
 
 
   std::vector<CVariable*>   m_VarSpace;
   std::map<std::string,functionDescriptor_t*>  m_FunSpace;  // function name to point in code after function name i.e. "function foo(float a, float b)" the const char* points to '('.
-  std::map<std::string,BuiltInfunction_t>    m_BuiltInFunMap;
+  std::map<std::string,BuiltInfunction_t>      m_BuiltInFunMap;
 
   const char *              m_CurPos {nullptr};
   const char *              m_StartPos {nullptr};

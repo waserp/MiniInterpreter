@@ -73,6 +73,64 @@ void CMiniInterpreter::PushBuiltIns()
   //m_BuiltInFunMap["max"] = [](std::vector<CVariable*>& parVec){ float val; for (auto pPar : parVec) {  }  return 0.0F;};
 }
 
+void CMiniInterpreter::Clean()
+{
+  for (auto var : m_VarSpace) { // check if it is a variable
+    delete var;  // delete variable
+  }
+  m_VarSpace.clear(); // delete varspace entry
+  for (auto fundesc : m_FunSpace) {
+    delete fundesc.second;
+  }
+  m_FunSpace.clear();
+}
+
+bool CMiniInterpreter::PreloadVariable(const char * p_varname, float p_val)
+{
+  CVariable* pv =FindExistingVariable(p_varname);
+  if (pv==nullptr) {
+    pv = new CVariable(CVariable::eVT_float);
+    pv->m_name = p_varname;
+    pv->SetFloatValue(p_val);
+    m_VarSpace.push_back(pv);
+    return true;
+  }
+  pv->SetFloatValue(p_val);
+  return false;
+}
+
+bool CMiniInterpreter::PreloadVariable(const char * p_varname, std::string p_val)
+{
+  CVariable* pv =FindExistingVariable(p_varname);
+  if (pv==nullptr) {
+    pv = new CVariable(CVariable::eVT_string);
+    pv->m_name = p_varname;
+    pv->SetStringValue(p_val);
+    m_VarSpace.push_back(pv);
+    return true;
+  }
+  pv->SetStringValue(p_val);
+  return false;
+}
+
+float CMiniInterpreter::GetFloatValue(const char * p_varname)
+{
+ CVariable* pv =FindExistingVariable(p_varname);
+ if (pv==nullptr) {
+   return nanf("0");
+ }
+ return pv->GetFloatValue();
+}
+
+CVariable* CMiniInterpreter::FindExistingVariable(const char * p_name)
+{
+  for (auto var : m_VarSpace) { // check if it is a variable
+    if ( 0 == var->m_name.compare(p_name)) {
+      return var;
+    }
+  }
+  return nullptr;
+}
 
 
 uint32_t CMiniInterpreter::GetCurrentLine()

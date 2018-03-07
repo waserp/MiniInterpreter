@@ -13,6 +13,14 @@ static uint32_t testCountPassed = 0;
 static uint32_t TotaltestCountPassed = 0;
 static uint32_t testSetsPassed = 0;
 
+bool equalBool(bool a, bool b)
+{
+  if (a==b) {testCountPassed++; return true;}
+  std::cout << Colors::red << " ERROR " << " evaluated: " << a << " expected " << b << Colors::white << std::endl;
+  exit(-1);
+  return false;
+}
+
 bool equalFloat(float a , float b)
 {
   //std::cout << "  diff  " << fabs(a-b) << std::endl;
@@ -174,6 +182,22 @@ void TestRegisterCustomBuiltInFun()
   PassedMessage();
 }
 
+void TestPreloadVariable()
+{
+  CMiniInterpreter interp;
+  equalBool(interp.PreloadVariable("aa",34.56F),true);
+  equalFloat( interp.GetFloatValue("aa"),34.56F);
+  equalBool(interp.PreloadVariable("aa",3.0F),false);
+  equalFloat( interp.GetFloatValue("aa"),3.0F);
+  equalBool(interp.PreloadVariable("aast",std::string("kkkkl")),true);
+  equalString(interp.GetStringValue("aast"),"kkkkl");
+  equalBool(interp.PreloadVariable("aast",std::string("_____")),false);
+  equalString(interp.GetStringValue("aast"),"_____");
+  interp.Clean();
+  equalBool(interp.PreloadVariable("aast",std::string("kkkkl")),true);
+  equalBool(interp.PreloadVariable("aa",34.56F),true);
+  PassedMessage();
+}
 
 //float Calculate(std::string p_expression);
 int main(int argc, char **argv)
@@ -187,6 +211,7 @@ int main(int argc, char **argv)
   TestStrings();
   TestFloatArrayInitializers();
   TestRegisterCustomBuiltInFun();
+  TestPreloadVariable();
   EndReport();
 
 /*
@@ -216,23 +241,6 @@ int main(int argc, char **argv)
   try {    interp.InsertFunPointer("moo",";");    }
   catch (const std::exception& e) {    std::cout << "Script failed totaly expected with: " << e.what() << std::endl;  }
 */
-
-
-
-//  interp.InterpretCode("float foo = 6 * (1 + 2);\n print(\" hello:\",34.3,\" foo is:\",foo);\n  print(\"\nkk\n\"); sin(0.1);  ");
-
-
-//  interp.InterpretCode("        float bar = (sin(0.1) + 1.1) *2.0;  print(\"bar=\",bar,\"\n\");");
-//  equalFloat( interp.GetFloatValue("bar"), ((sin(0.1) + 1.1) *2.0 ));
-
-  //interp.InterpretCode("  foo = 6 * (1 + 2);  bar=foo*1.23;   ");
-  //interp.InterpretCode("  float bar = 2;  bar= bar - 1;  ");
-
-  //interp.InterpretCode("  float bar = 2; while(bar) { print(\"{}{{bar=\",bar); bar = bar -1;}  print(\"exit\");  ");
-
-
-  //interp.InterpretCode("  float bar = 2; while(bar < 4) { print(\"{}{{bar=\",bar); bar = bar +1;}  print(\"exit\");  ");
-
 
 	return 0;
 }
