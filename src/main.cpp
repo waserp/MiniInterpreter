@@ -198,7 +198,14 @@ void TestPreloadVariable()
   equalBool(interp.PreloadVariable("aa",34.56F),true);
   PassedMessage();
 }
-
+void TestExecuteFunction()
+{
+  CMiniInterpreter interp;
+  interp.InterpretCode(" print(\"before\"); \n function foo(){ print(\"hello from foo\"); }   print(\"after\"); \n ");
+  std::cout << "-----------\n";
+  equalBool(interp.ExecuteFunction("foo"),true);
+  PassedMessage();
+}
 //float Calculate(std::string p_expression);
 int main(int argc, char **argv)
 {
@@ -212,6 +219,7 @@ int main(int argc, char **argv)
   TestFloatArrayInitializers();
   TestRegisterCustomBuiltInFun();
   TestPreloadVariable();
+  TestExecuteFunction();
   EndReport();
 
 /*

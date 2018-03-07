@@ -247,7 +247,6 @@ bool CMiniInterpreter::TryReadNumber()
 
 bool CMiniInterpreter::TryReadName(std::string& p_name)
 {
-
   p_name = "";
   const char * pt = m_CurPos;
   if (!isalpha(*pt)) return false; // name must start with a letter
@@ -259,6 +258,7 @@ bool CMiniInterpreter::TryReadName(std::string& p_name)
   m_CurPos = pt;
   return true;
 }
+
 bool CMiniInterpreter::TryReadStringConstant()
 {
   if (*m_CurPos!='"') return false;
@@ -537,6 +537,40 @@ ETokenType CMiniInterpreter::GetNextOf(ETokenType a, ETokenType b)
  #       #    #  #   ##  #    #     #       #    #    #  #   ##
  #        ####   #    #   ####      #       #     ####   #    #*/
 
+bool CMiniInterpreter::ExecuteFunction(const char* p_name)
+{
+  auto itf = m_FunSpace.find(p_name);
+  if (itf != m_FunSpace.end()) {  //std::cout << " function name found " << name << std::endl;
+    m_LastFunctionDescriptor = itf->second;
+    InterpretCode(m_LastFunctionDescriptor->StartOfFuncode, eTT_KW_BraceClose);
+    return true;
+  }
+  return false;
+}
+
+void CMiniInterpreter::ExecuteFunction()
+{
+  std::cout << Colors::violet << "execute this-->" <<  Colors::white << std::endl;
+  // parse given parameters
+  std::map<std::string,CVariable*>* backup = m_ParameterVariableMap;
+  std::map<std::string,CVariable*> parmap;
+  m_ParameterVariableMap = &parmap;
+  // parse given parameters
+  if (GetToken('l') != eTT_KW_RoundParOpen) {throw std::runtime_error("Error expected '(' "); }
+  ETokenType totype;
+  do {
+    totype = GetToken('l');
+
+  } while(totype != eTT_KW_RoundParClose);
+  std::cout << Colors::violet << "execute this-->" << m_LastFunctionDescriptor->StartOfFuncode  <<  Colors::white << std::endl;
+  const char * backupPosition = m_CurPos;
+  InterpretCode(m_LastFunctionDescriptor->StartOfFuncode, eTT_KW_BraceClose);
+
+  // restore old parameters
+  m_ParameterVariableMap = backup;
+  m_CurPos = backupPosition; // continiue at old position
+}
+
 void CMiniInterpreter::InsertFunPointer(std::string p_funname, functionDescriptor_t* fundes)
 {
   if (m_FunSpace.end() != m_FunSpace.find(p_funname)) {
@@ -685,28 +719,7 @@ void CMiniInterpreter::SkipPair(ETokenType p_Starttoken,ETokenType p_Endtoken, b
   } while(totype != p_Endtoken);
 }
 
-void CMiniInterpreter::ExecuteFunction()
-{
-  std::cout << Colors::violet << "execute this-->" <<  Colors::white << std::endl;
-  // parse given parameters
-  std::map<std::string,CVariable*>* backup = m_ParameterVariableMap;
-  std::map<std::string,CVariable*> parmap;
-  m_ParameterVariableMap = &parmap;
-  // parse given parameters
-  if (GetToken('l') != eTT_KW_RoundParOpen) {throw std::runtime_error("Error expected '(' "); }
-  ETokenType totype;
-  do {
-    totype = GetToken('l');
 
-  } while(totype != eTT_KW_RoundParClose);
-  std::cout << Colors::violet << "execute this-->" << m_LastFunctionDescriptor->StartOfFuncode  <<  Colors::white << std::endl;
-  const char * backupPosition = m_CurPos;
-  InterpretCode(m_LastFunctionDescriptor->StartOfFuncode, eTT_KW_BraceClose);
-
-  // restore old parameters
-  m_ParameterVariableMap = backup;
-  m_CurPos = backupPosition; // continiue at old position
-}
 
 
 

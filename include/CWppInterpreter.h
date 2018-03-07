@@ -77,6 +77,16 @@ class CMiniInterpreter {
     /// @param[in] p_Endtoken the endtoken
     void InterpretCode(const char * p_code, ETokenType p_Endtoken = eTT_SN_Zero);
 
+    /// Execute the function with the given name. The function must have been in the previously
+    /// with InterpretCode parsed code.
+    /// @code
+    /// interp.InterpretCode(" // other code \n function foo(){ print(\"hello from foo\"); }   // other code \n ");
+    /// interp.ExecuteFunction("foo");
+    /// @endcode
+    /// @param[in] p_name
+    /// @return true if the function was executed. false if it was not found
+    bool ExecuteFunction(const char* p_name);
+
     /// Evaluate the numeric expression i.e. EvaluateNumExpression(" 1 + 3 * 2"); returns 7
     /// @param[in] p_expression the expression to be evaluated
     /// @return the value
@@ -140,10 +150,12 @@ private:
   CVariable* FindExistingVariable(const char * p_name);
 
 
-  std::vector<CVariable*>   m_VarSpace;
+  std::vector<CVariable*>                      m_VarSpace;  // todo make this a map
+
   std::map<std::string,functionDescriptor_t*>  m_FunSpace;  // function name to point in code after function name i.e. "function foo(float a, float b)" the const char* points to '('.
   std::map<std::string,BuiltInfunction_t>      m_BuiltInFunMap;
 
+  // parser state variables
   const char *              m_CurPos {nullptr};
   const char *              m_StartPos {nullptr};
   const char *              m_tokenName {nullptr};
