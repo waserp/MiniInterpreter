@@ -296,13 +296,29 @@ void CMiniInterpreter::ReadArrayIndex(CVariable* p_var, char p_mode)
  #    #  #          #       #    #    #  #   #   #       #   ##
   ####   ######     #       #     ####   #    #  ######  #    # */
 
-ETokenType CMiniInterpreter::GetToken(const char type)
+
+ETokenType CMiniInterpreter::RemoveWhitespace()
 {
+  do {
     while (isspace(*m_CurPos)) {
         m_CurPos++; // remove whitespace
     }
-
     if (*m_CurPos == 0) return eTT_SN_Zero;
+    if ((*m_CurPos == '/') && (*(m_CurPos+1) == '/')) { // dump comment
+      while (*m_CurPos != '\n') {
+        if (*m_CurPos == 0) return eTT_SN_Zero;
+        m_CurPos++;
+      }
+    }
+  } while (isspace(*m_CurPos));
+  if (*m_CurPos == 0) return eTT_SN_Zero;
+  return eTT_KW_DontCare;
+}
+
+ETokenType CMiniInterpreter::GetToken(const char type)
+{
+    if ( RemoveWhitespace()== eTT_SN_Zero ) { return eTT_SN_Zero; }
+
 
     if (type == 'n') {  // expect a number, so first try read number
       //printf("\n  type = 'n' rm whitespace>%s<\n",m_CurPos);

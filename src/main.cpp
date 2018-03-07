@@ -201,7 +201,8 @@ void TestPreloadVariable()
 void TestExecuteFunction()
 {
   CMiniInterpreter interp;
-  interp.InterpretCode(" print(\"before\"); \n function foo(){ print(\"hello from foo\"); }   print(\"after\"); \n ");
+  interp.InterpretCode(" print(\"before\"); \n//cmt \n print(\"after // this is not a comment\"); \n//commenrt ");
+  interp.InterpretCode(" print(\"before\"); \n function foo(){ print(\"hello from foo\"); }   print(\"after\"); \n//commenrt ");
   std::cout << "-----------\n";
   equalBool(interp.ExecuteFunction("foo"),true);
   PassedMessage();
