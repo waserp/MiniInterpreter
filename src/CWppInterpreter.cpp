@@ -12,6 +12,7 @@
 #include <ctype.h>
 #include <iostream>
 
+//#define Debug
 
 
 struct KeyWordList_t {
@@ -97,7 +98,9 @@ void CMiniInterpreter::CreateVariable(CVariable::eVarType p_VarType)
   }
   if ( totype != eTT_NM_UnknownIdentifier) { throw std::runtime_error("Error expected identifier after float statment!"); }
   pVar->SetName(m_Unknownidentifier);
+  #ifdef Debug
   std::cout << Colors::Iblue << "Variable with name :[" << pVar->m_name.c_str() << "] created of type [" << pVar->GetTypeAsString() << "]" << Colors::white << std::endl;
+  #endif // Debug
   m_VarSpace.push_back(pVar);
   totype = GetToken();
   if (totype == eTT_SN_Semicolon) { return; } // were done, ok
@@ -217,7 +220,6 @@ bool CMiniInterpreter::keyComp(const char * p_keyword)
     if (*pt == 0) { return false; }
     kwp++;
     pt++;
-    //system("read a");
   }
   m_tokenName = p_keyword;
   if (!isalnum(p_keyword[0])) { m_CurPos = pt; return true; } // keywords like "+" "-" etc can be followed by letters i.e. a=b+c
@@ -322,7 +324,6 @@ ETokenType CMiniInterpreter::GetToken(const char type)
 
     if (type == 'n') {  // expect a number, so first try read number
       //printf("\n  type = 'n' rm whitespace>%s<\n",m_CurPos);
-      //system("read a");
       if (TryReadNumber()) { return eTT_ST_NumericValue; }
     }
     if (TryReadStringConstant()) { return eTT_SN_StringConstant;}
@@ -340,8 +341,17 @@ ETokenType CMiniInterpreter::GetToken(const char type)
     //printf("search in varspace\n");
     for (auto var : m_VarSpace) { // check if it is a variable
       if ( keyComp(var->m_name.c_str())) {
-        if (type == 'l') { ReadArrayIndex(var,'L'); m_lValueVar = var; printf("det Lvar %s\n",var->m_name.c_str()); return eTT_ST_Variable; }
-        else { ReadArrayIndex(var); m_tokenValue = var->GetFloatValue(); printf("det var %s\n",var->m_name.c_str()); return eTT_ST_NumericValue; } // directly resolve to num value if we are r
+        if (type == 'l') {
+          ReadArrayIndex(var,'L');
+          m_lValueVar = var;
+          //printf("det Lvar %s\n",var->m_name.c_str());
+          return eTT_ST_Variable;
+        } else {
+          ReadArrayIndex(var);
+          m_tokenValue = var->GetFloatValue();
+          //printf("det var %s\n",var->m_name.c_str());
+          return eTT_ST_NumericValue;
+        } // directly resolve to num value if we are r
       }
     }
     std::string name;
@@ -376,7 +386,6 @@ void CMiniInterpreter::GetNewName(std::string& p_name)
   ETokenType totype = GetToken();
   if ( totype == eTT_NM_UnknownIdentifier) { p_name = m_Unknownidentifier; return; }
   if ( totype != eTT_SN_LISTEND ) {
-     printf("fatal expect new variable name after float, instead got [%s]\n",m_tokenName);
      throw std::runtime_error(("fatal expect new variable name instead got [" + p_name + "]").c_str());
   }
 
@@ -400,7 +409,9 @@ float CMiniInterpreter::EvaluateNumExpression(const char * p_expression)
 {
   m_CurPos = p_expression;
   m_StartPos = p_expression;
+  #ifdef Debug
   std::cout << "--------------------------------------------\n" << p_expression << "\n";
+  #endif // Debug
   return EvaluateNumExpression(eTT_SN_Semicolon);
 }
 
@@ -499,14 +510,22 @@ float CMiniInterpreter::EvaluateNumExpression(ETokenType p_Endtoken)
       float opa = rpnstack.back();rpnstack.pop_back();
       float opb = rpnstack.back();rpnstack.pop_back();
       switch (oQ.tok){
-        case eTT_SN_Plus: result = opa + opb; std::cout << opb << " + " << opa <<  " = " << result << "\n";        break;
-        case eTT_SN_Minus: result = opb - opa ; std::cout << opb << " - " << opa <<  " = " << result << "\n";        break;
-        case eTT_SN_Mul: result = opa * opb; std::cout << opa << " * " << opb <<  " = " << result << "\n";        break;
-        case eTT_SN_Div: result = opb / opa; std::cout << opb << " / " << opa <<  " = " << result << "\n";   break;
-        case eTT_SN_LessThan: result = (opb < opa); std::cout << opb << " < " << opa <<  " = " << result << "\n";   break;
-        case eTT_SN_GreaterThan: result = (opb > opa); std::cout << opa << " < " << opb <<  " = " << result << "\n";   break;
-        case eTT_SN_EqualCompare: result = (opb == opa); std::cout << opa << " == " << opb <<  " = " << result << "\n";   break;
-        case eTT_SN_NotEqualCompare: result = (opb != opa); std::cout << opa << " != " << opb <<  " = " << result << "\n";   break;
+        case eTT_SN_Plus: result = opa + opb; //std::cout << opb << " + " << opa <<  " = " << result << "\n";
+           break;
+        case eTT_SN_Minus: result = opb - opa ; //std::cout << opb << " - " << opa <<  " = " << result << "\n";
+           break;
+        case eTT_SN_Mul: result = opa * opb; //std::cout << opa << " * " << opb <<  " = " << result << "\n";
+           break;
+        case eTT_SN_Div: result = opb / opa; //std::cout << opb << " / " << opa <<  " = " << result << "\n";
+           break;
+        case eTT_SN_LessThan: result = (opb < opa); //std::cout << opb << " < " << opa <<  " = " << result << "\n";
+           break;
+        case eTT_SN_GreaterThan: result = (opb > opa); //std::cout << opa << " < " << opb <<  " = " << result << "\n";
+           break;
+        case eTT_SN_EqualCompare: result = (opb == opa); //std::cout << opa << " == " << opb <<  " = " << result << "\n";
+           break;
+        case eTT_SN_NotEqualCompare: result = (opb != opa); //std::cout << opa << " != " << opb <<  " = " << result << "\n";
+           break;
         default :
         break;
       }
@@ -566,7 +585,9 @@ bool CMiniInterpreter::ExecuteFunction(const char* p_name)
 
 void CMiniInterpreter::ExecuteFunction()
 {
+  #ifdef Debug
   std::cout << Colors::violet << "execute this-->" <<  Colors::white << std::endl;
+  #endif // Debug
   // parse given parameters
   std::map<std::string,CVariable*>* backup = m_ParameterVariableMap;
   std::map<std::string,CVariable*> parmap;
@@ -578,7 +599,9 @@ void CMiniInterpreter::ExecuteFunction()
     totype = GetToken('l');
 
   } while(totype != eTT_KW_RoundParClose);
+  #ifdef Debug
   std::cout << Colors::violet << "execute this-->" << m_LastFunctionDescriptor->StartOfFuncode  <<  Colors::white << std::endl;
+  #endif // Debug
   const char * backupPosition = m_CurPos;
   InterpretCode(m_LastFunctionDescriptor->StartOfFuncode, eTT_KW_BraceClose);
 
@@ -617,7 +640,9 @@ void CMiniInterpreter::PreParseFunction()
    SkipPair(eTT_KW_BraceOpen,eTT_KW_BraceClose,false);
    InsertFunPointer(funname,fundes);
    // parse parameters
+   #ifdef Debug
    std::cout << " done:" << Colors::blue <<  m_CurPos << Colors::white << std::endl;
+   #endif // Debug
    // advance m_CurPos first behind function parameter and then behind function body.
 }
 
@@ -628,7 +653,7 @@ float CMiniInterpreter::ExecuteBuiltIn()
     ETokenType totype = GetToken('l');
     ETokenType NextExpected = eTT_KW_RoundParOpen;
     while (totype != eTT_KW_RoundParClose) {
-      std::cout << " ExecBuilt in : " << totype << std::endl;
+      //std::cout << " ExecBuilt in : " << totype << std::endl;
       if ((totype != NextExpected) && (NextExpected != eTT_KW_DontCare)) {  throw std::runtime_error("Unexpected token while parsing parameter list");}
 
       switch (totype) {
@@ -650,7 +675,7 @@ float CMiniInterpreter::ExecuteBuiltIn()
         case eTT_SN_StringConstant:
           {
             CVariable* pVar = new CVariable(CVariable::eVT_string,true);
-            std::cout << " StringConstant Found :" << m_StringConstant << std::endl;
+            //std::cout << " StringConstant Found :" << m_StringConstant << std::endl;
             pVar->SetStringValue(m_StringConstant);
             paramList.push_back(pVar);
             NextExpected = eTT_KW_Comma;
@@ -748,7 +773,10 @@ void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)
     while (!statementDone) {
       ETokenType totype = GetToken('l');
       //std::cout << "while after get token " << std::endl;
-      if (totype == p_Endtoken) { std::cout << "endtoken found \n"; return;}
+      if (totype == p_Endtoken) {
+       //std::cout << "endtoken found \n";
+       return;
+      }
       switch (totype) {
         case eTT_KW_float:
           CreateVariable(CVariable::eVT_float);
