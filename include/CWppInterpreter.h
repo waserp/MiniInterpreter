@@ -66,6 +66,9 @@ class CMiniInterpreter {
     /// Built in Function definition
     typedef std::function<float(std::vector<CVariable*>&)> BuiltInfunction_t;
 
+    /// Call Back Function
+    typedef std::function<bool(uint32_t, std::map<std::string, CVariable*>&)>  CallBack_t;
+
     /// Constructor, registers the built in functions
     CMiniInterpreter();
 
@@ -124,7 +127,12 @@ class CMiniInterpreter {
     /// a function is an in-script defined function
     void InsertFunPointer(std::string p_funname, functionDescriptor_t* fundes);
 
+    /// Register a Callback function which is called after each statement
+    /// Allows single step or abort
+    void RegisterStatementCallBack(CallBack_t p_CallBack) { m_CallBack = p_CallBack; }
+
 private:
+  void ThrowFatalError(const char *format, ...);
   bool TryReadName(std::string& name);
   bool TryReadStringConstant();
   void ParChecker(const uint32_t p_count, const char * p_name,std::vector<CVariable*>& parVec);
@@ -151,11 +159,12 @@ private:
   bool keyComp(const char * p_keyword);
   CVariable* FindExistingVariable(const char * p_name);
 
-
-  std::vector<CVariable*>                      m_VarSpace;  // todo make this a map
+  std::map<std::string,CVariable*>                         m_VarMap;
 
   std::map<std::string,functionDescriptor_t*>  m_FunSpace;  // function name to point in code after function name i.e. "function foo(float a, float b)" the const char* points to '('.
   std::map<std::string,BuiltInfunction_t>      m_BuiltInFunMap;
+
+  CallBack_t                m_CallBack {nullptr};
 
   // parser state variables
   const char *              m_CurPos {nullptr};

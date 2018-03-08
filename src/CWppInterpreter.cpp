@@ -11,7 +11,7 @@
 #include <cstring>
 #include <ctype.h>
 #include <iostream>
-
+#include <stdarg.h>
 //#define Debug
 
 
@@ -51,6 +51,22 @@ KeyWordList_t KeyWords[] = {
 };
 
 const char * helperTo2Str(ETokenType to){KeyWordList_t* kp= &KeyWords[0]; while (kp->token!= eTT_SN_LISTEND) { if (kp->token == to) return kp->name; kp++;} return "unknown :( !"; }
+
+
+void CMiniInterpreter::ThrowFatalError(const char *format, ...)
+{
+  va_list arglist;
+  char msg[512];
+  int32_t pcnt = snprintf(msg,50,"Script-Error Line %04d:",GetCurrentLine());
+  //std::cout << pcnt << " " << msg << std::endl;
+  if ((pcnt < 0) || ( pcnt > 100)){
+    pcnt = 0;
+  }
+  va_start(arglist, format);
+  vsnprintf(&msg[pcnt], sizeof(msg) -pcnt, format, arglist);
+  throw std::runtime_error(msg);
+}
+
 
 
 CMiniInterpreter::CMiniInterpreter()
@@ -96,12 +112,12 @@ void CMiniInterpreter::CreateVariable(CVariable::eVarType p_VarType)
     }
     totype = GetToken();
   }
-  if ( totype != eTT_NM_UnknownIdentifier) { throw std::runtime_error("Error expected identifier after float statment!"); }
+  if ( totype != eTT_NM_UnknownIdentifier) {  ThrowFatalError("Expected a new variable name, redeclaration or reserved word "); }
   pVar->SetName(m_Unknownidentifier);
   #ifdef Debug
   std::cout << Colors::Iblue << "Variable with name :[" << pVar->m_name.c_str() << "] created of type [" << pVar->GetTypeAsString() << "]" << Colors::white << std::endl;
   #endif // Debug
-  m_VarSpace.push_back(pVar);
+  m_VarMap[m_Unknownidentifier] = pVar;
   totype = GetToken();
   if (totype == eTT_SN_Semicolon) { return; } // were done, ok
   if (totype == eTT_SN_Equal) {
@@ -110,7 +126,7 @@ void CMiniInterpreter::CreateVariable(CVariable::eVarType p_VarType)
       break;
       case CVariable::eVT_floatArray:
       {
-        if ( GetToken() != eTT_SN_OpeningBracket) { throw std::runtime_error("Error expected array initializer i.e. [1,2,3] after float[] = statment!"); }
+        if ( GetToken() != eTT_SN_OpeningBracket) { ThrowFatalError("Error expected array initializer i.e. [1,2,3] after float[] = statment!"); }
         uint32_t index = 0;
         do {
           totype = GetNextOf(eTT_SN_ClosingBracket,eTT_KW_Comma);
@@ -130,15 +146,15 @@ void CMiniInterpreter::CreateVariable(CVariable::eVarType p_VarType)
     }
     return;
   }
-  throw std::runtime_error(("Error fatal expect Semicolon after Variable definition. Variable Name[" + pVar->m_name + "] totype[" + std::to_string(totype) + "] Line["+ std::to_string(GetCurrentLine()) +"]\n").c_str());
+  ThrowFatalError("Error fatal expect Semicolon after Variable definition. Variable Name[%s] totype[%d]",pVar->GetName().c_str(),totype);
 }
 
 void CMiniInterpreter::Clean()
 {
-  for (auto var : m_VarSpace) { // check if it is a variable
-    delete var;  // delete variable
+  for (auto it :  m_VarMap) {
+    delete it.second;
   }
-  m_VarSpace.clear(); // delete varspace entry
+  m_VarMap.clear();
   for (auto fundesc : m_FunSpace) {
     delete fundesc.second;
   }
@@ -150,9 +166,9 @@ bool CMiniInterpreter::PreloadVariable(const char * p_varname, float p_val)
   CVariable* pv =FindExistingVariable(p_varname);
   if (pv==nullptr) {
     pv = new CVariable(CVariable::eVT_float);
-    pv->m_name = p_varname;
+    pv->SetName(p_varname);
     pv->SetFloatValue(p_val);
-    m_VarSpace.push_back(pv);
+    m_VarMap[p_varname] = pv;
     return true;
   }
   pv->SetFloatValue(p_val);
@@ -164,9 +180,9 @@ bool CMiniInterpreter::PreloadVariable(const char * p_varname, std::string p_val
   CVariable* pv =FindExistingVariable(p_varname);
   if (pv==nullptr) {
     pv = new CVariable(CVariable::eVT_string);
-    pv->m_name = p_varname;
+    pv->SetName(p_varname);
     pv->SetStringValue(p_val);
-    m_VarSpace.push_back(pv);
+    m_VarMap[p_varname] = pv;
     return true;
   }
   pv->SetStringValue(p_val);
@@ -184,12 +200,11 @@ float CMiniInterpreter::GetFloatValue(const char * p_varname)
 
 CVariable* CMiniInterpreter::FindExistingVariable(const char * p_name)
 {
-  for (auto var : m_VarSpace) { // check if it is a variable
-    if ( 0 == var->m_name.compare(p_name)) {
-      return var;
-    }
+  auto it = m_VarMap.find(p_name);
+  if (it == m_VarMap.end()) {
+    return nullptr;
   }
-  return nullptr;
+  return it->second;
 }
 
 std::string CMiniInterpreter::GetStringValue(const char * p_varname)
@@ -267,7 +282,7 @@ bool CMiniInterpreter::TryReadStringConstant()
   m_StringConstant = "";
   m_CurPos++;
   while (*m_CurPos!='"') {
-    if (*m_CurPos==0) { throw std::runtime_error(("Error, Reading string constant no terminating '\"' detected"));   }
+    if (*m_CurPos==0) { ThrowFatalError("Reading string constant no terminating '\"' detected");  }
     m_StringConstant += *m_CurPos;
     m_CurPos++;
   }
@@ -279,7 +294,7 @@ void CMiniInterpreter::ReadArrayIndex(CVariable* p_var, char p_mode)
 {
   if (!p_var->Is_Array()) { return; }
   while (isspace(*m_CurPos)) { m_CurPos++; }
-  if (*m_CurPos != '[') { throw std::runtime_error(("Error, expected array index!")); }
+  if (*m_CurPos != '[') { ThrowFatalError("Error, expected array index after variable [%s]",p_var->GetName().c_str()); }
   m_CurPos++;
   uint32_t index = lrintf(EvaluateNumExpression(eTT_SN_ClosingBracket));
   if (p_mode == 'L') {
@@ -338,24 +353,25 @@ ETokenType CMiniInterpreter::GetToken(const char type)
       }
       pkwl++;
     }
-    //printf("search in varspace\n");
-    for (auto var : m_VarSpace) { // check if it is a variable
-      if ( keyComp(var->m_name.c_str())) {
+    std::string name;
+    if (TryReadName(name)) {  // we got some sort of name
+      //std::cout << "Redname succ >" << name << "<\n";
+      auto itv = m_VarMap.find(name);
+      if (itv != m_VarMap.end()) {
+        //std::cout << " in var map" << std::endl;
+        CVariable* var = itv->second;
         if (type == 'l') {
           ReadArrayIndex(var,'L');
           m_lValueVar = var;
-          //printf("det Lvar %s\n",var->m_name.c_str());
+          //printf("det Lvar %s\n",var->GetName().c_str());
           return eTT_ST_Variable;
         } else {
           ReadArrayIndex(var);
           m_tokenValue = var->GetFloatValue();
-          //printf("det var %s\n",var->m_name.c_str());
+          //printf("det var %s\n",var->GetName().c_str());
           return eTT_ST_NumericValue;
         } // directly resolve to num value if we are r
       }
-    }
-    std::string name;
-    if (TryReadName(name)) {  // we got some sort of name
       //std::cout << " TryReadName succcess  found [" << name << "]" << std::endl;
       auto it = m_BuiltInFunMap.find(name);
       if (it != m_BuiltInFunMap.end()) { //std::cout << " Build In found found " << name << std::endl;
@@ -386,7 +402,7 @@ void CMiniInterpreter::GetNewName(std::string& p_name)
   ETokenType totype = GetToken();
   if ( totype == eTT_NM_UnknownIdentifier) { p_name = m_Unknownidentifier; return; }
   if ( totype != eTT_SN_LISTEND ) {
-     throw std::runtime_error(("fatal expect new variable name instead got [" + p_name + "]").c_str());
+     ThrowFatalError("Expeced new identifier instead got [%s]",p_name.c_str());
   }
 
   while (isalnum(*m_CurPos)) {
@@ -471,8 +487,7 @@ float CMiniInterpreter::EvaluateNumExpression(ETokenType p_Endtoken)
       }
       LastPrecedence = -1;
     } else {
-      std::string errorCode = std::string("Error: unexpected token EvaluateNumExpression Line: ")+  std::to_string(GetCurrentLine()) + " totype " + std::to_string(totype);
-      throw std::runtime_error(errorCode.c_str());
+      ThrowFatalError("unexpected token in EvaluateNumExpression [%d]",totype);
     }
 
 
@@ -557,7 +572,7 @@ ETokenType CMiniInterpreter::GetNextOf(ETokenType a, ETokenType b)
   do {
     to = GetToken();
     if (to == eTT_SN_Zero) {
-      throw std::runtime_error("Error unexpected end of file!");
+      ThrowFatalError("Error unexpected end of file!");
     }
   } while ((to != a) && (to != b));
   m_CurPos = p;
@@ -593,7 +608,7 @@ void CMiniInterpreter::ExecuteFunction()
   std::map<std::string,CVariable*> parmap;
   m_ParameterVariableMap = &parmap;
   // parse given parameters
-  if (GetToken('l') != eTT_KW_RoundParOpen) {throw std::runtime_error("Error expected '(' "); }
+  if (GetToken('l') != eTT_KW_RoundParOpen) { ThrowFatalError("Expected '(' "); }
   ETokenType totype;
   do {
     totype = GetToken('l');
@@ -613,7 +628,7 @@ void CMiniInterpreter::ExecuteFunction()
 void CMiniInterpreter::InsertFunPointer(std::string p_funname, functionDescriptor_t* fundes)
 {
   if (m_FunSpace.end() != m_FunSpace.find(p_funname)) {
-    throw std::runtime_error(("duplicate function name [" + p_funname + "]").c_str());
+    ThrowFatalError("duplicate function name [%s]",p_funname.c_str());
   };
   m_FunSpace[p_funname] = fundes;
 }
@@ -625,17 +640,17 @@ void CMiniInterpreter::PreParseFunction()
    std::cout << Colors::blue <<  m_CurPos << Colors::white << std::endl;
    GetNewName(funname);
    functionDescriptor_t* fundes = new functionDescriptor_t;
-   if (eTT_KW_RoundParOpen != GetToken()) { throw std::runtime_error("Error expect '(' after function <name>!"); }
+   if (eTT_KW_RoundParOpen != GetToken()) { ThrowFatalError("expect '(' after function <name> [%s]",funname.c_str()); }
    ETokenType totype;
    do {
      totype = GetToken('l');
      if ((totype == eTT_KW_float) || (totype == eTT_KW_StringDesignator)) {
        GetNewName(varname);
        fundes->LocalVarNames.push_back(std::pair<std::string,ETokenType>(varname,totype));
-     } else if ((totype != eTT_KW_Comma) && (totype != eTT_KW_RoundParClose)) { throw std::runtime_error("Error unexpect token in function definition");  }
+     } else if ((totype != eTT_KW_Comma) && (totype != eTT_KW_RoundParClose)) { ThrowFatalError("unexpect token in function definition");  }
      std::cout << Colors::blue <<  m_CurPos << Colors::white << std::endl;
    } while (totype != eTT_KW_RoundParClose );
-   if (GetToken('l') != eTT_KW_BraceOpen) { throw std::runtime_error("Error unexpect token in function definition");  }
+   if (GetToken('l') != eTT_KW_BraceOpen) { ThrowFatalError("unexpect token in function definition");  }
    fundes->StartOfFuncode = m_CurPos;
    SkipPair(eTT_KW_BraceOpen,eTT_KW_BraceClose,false);
    InsertFunPointer(funname,fundes);
@@ -654,7 +669,7 @@ float CMiniInterpreter::ExecuteBuiltIn()
     ETokenType NextExpected = eTT_KW_RoundParOpen;
     while (totype != eTT_KW_RoundParClose) {
       //std::cout << " ExecBuilt in : " << totype << std::endl;
-      if ((totype != NextExpected) && (NextExpected != eTT_KW_DontCare)) {  throw std::runtime_error("Unexpected token while parsing parameter list");}
+      if ((totype != NextExpected) && (NextExpected != eTT_KW_DontCare)) { ThrowFatalError("Unexpected token while parsing parameter list to call");}
 
       switch (totype) {
         case eTT_ST_Variable :
@@ -684,7 +699,7 @@ float CMiniInterpreter::ExecuteBuiltIn()
         // todo numeric or string
         default :
           if (totype != NextExpected) {
-            throw std::runtime_error("Unexpected token while parsing parameter list 2");
+            ThrowFatalError("Unexpected token while parsing parameter list 2");
           } else {
              NextExpected = eTT_KW_DontCare;
           }
@@ -710,11 +725,11 @@ float CMiniInterpreter::ExecuteBuiltIn()
 void CMiniInterpreter::ExecuteWhile()
 {
   ETokenType totype = GetToken('l');
-  if (totype != eTT_KW_RoundParOpen) {throw std::runtime_error("Error no '(' after 'while'"); }
+  if (totype != eTT_KW_RoundParOpen) { ThrowFatalError("Error no '(' after 'while'"); }
   const char * BeginOfExpression = m_CurPos;
   //std::cout << "\n     dump before entry >" << m_CurPos;
   while ( 0 != lrintf(EvaluateNumExpression(eTT_KW_RoundParClose))) {
-    if (GetToken('l') != eTT_KW_BraceOpen) {throw std::runtime_error("Error no '{' after 'while (..)'"); }
+    if (GetToken('l') != eTT_KW_BraceOpen) { ThrowFatalError("Error no '{' after 'while (..)'"); }
     InterpretCode(m_CurPos, eTT_KW_BraceClose);
     m_CurPos = BeginOfExpression; // back to begin if expression
     //std::cout << "\n     dump end of loop >" << m_CurPos;
@@ -727,10 +742,10 @@ void CMiniInterpreter::ExecuteIf()
 {
   bool elseFlag = false;
   ETokenType totype = GetToken('l');
-  if (totype != eTT_KW_RoundParOpen) {throw std::runtime_error("Error no '(' after 'if'"); }
+  if (totype != eTT_KW_RoundParOpen) { ThrowFatalError("Error no '(' after 'if'"); }
   if ( 0 != lrintf(EvaluateNumExpression(eTT_KW_RoundParClose))){
     //std::cout << Colors::violet << m_CurPos << std::endl;
-    if (GetToken('l') != eTT_KW_BraceOpen) {throw std::runtime_error("Error no '{' after 'if()'"); }
+    if (GetToken('l') != eTT_KW_BraceOpen) { ThrowFatalError("Error no '{' after 'if()'"); }
     InterpretCode(m_CurPos, eTT_KW_BraceClose);
   } else {
     SkipPair(eTT_KW_BraceOpen,eTT_KW_BraceClose);
@@ -740,7 +755,7 @@ void CMiniInterpreter::ExecuteIf()
   totype = GetToken('l');
   if (totype != eTT_KW_Else) {m_CurPos =PosBeforeSearchElse; return;  }  // // thereis no else after the if
   if (elseFlag) {
-     if (GetToken('l') != eTT_KW_BraceOpen) {throw std::runtime_error("Error no '{' after 'if()'"); }
+     if (GetToken('l') != eTT_KW_BraceOpen) { ThrowFatalError("Error no '{' after 'if()'"); }
      InterpretCode(m_CurPos, eTT_KW_BraceClose);
   } else {
     SkipPair(eTT_KW_BraceOpen,eTT_KW_BraceClose);
@@ -750,13 +765,13 @@ void CMiniInterpreter::ExecuteIf()
 void CMiniInterpreter::SkipPair(ETokenType p_Starttoken,ETokenType p_Endtoken, bool p_first)
 {
   if (p_first) {
-    if (GetToken('l') != p_Starttoken) {throw std::runtime_error("Error SkipPair no '{' "); }
+    if (GetToken('l') != p_Starttoken) { ThrowFatalError("Error SkipPair no '{' "); }
   }
   ETokenType totype;
   do {
     totype = GetToken('l');
     if (totype == p_Starttoken) {SkipPair(p_Starttoken,p_Endtoken,false);}
-    if (totype == eTT_SN_Zero) {throw std::runtime_error("Error SkipPair no '}' before end of file");}
+    if (totype == eTT_SN_Zero) { ThrowFatalError("Error SkipPair no '}' before end of file");}
   } while(totype != p_Endtoken);
 }
 
@@ -785,7 +800,7 @@ void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)
           CreateVariable(CVariable::eVT_string);
         break;
         case eTT_ST_Variable:
-          if (GetToken('l') != eTT_SN_Equal) {throw std::runtime_error("Error no '=' after variable name"); }
+          if (GetToken('l') != eTT_SN_Equal) { ThrowFatalError("no '=' after variable name"); }
           if ((m_lValueVar->GetType() == CVariable::eVT_float) || (m_lValueVar->GetType() == CVariable::eVT_floatArray)) {
             m_lValueVar->SetFloatValue(EvaluateNumExpression(eTT_SN_Semicolon));
           } else {
@@ -816,9 +831,12 @@ void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)
           ExecuteIf();
         break;
         default :
-          throw std::runtime_error(("Error Unexpected token totype[" + std::to_string(totype) + "] Line["+ std::to_string(GetCurrentLine()) +"]\n").c_str());
+          ThrowFatalError("Unexpected token totype[%d]",totype);
           return;
         break;
+      }
+      if (nullptr != m_CallBack) {
+        m_CallBack(GetCurrentLine(),m_VarMap);
       }
       //printf("Gettoken result %i  %s \n",totype, m_tokenName);
       //if (totype == eTT_SN_Semicolon) {statementDone = true;}

@@ -1,6 +1,10 @@
 #include "include/CVariable.h"
 #include <iostream>
 
+
+
+
+
 std::string& CVariable::GetString()
 {
   if (m_VarType==eVT_float) {
@@ -21,6 +25,9 @@ std::string& CVariable::GetString()
 
 float CVariable::GetFloatValue()
 {
+  if (m_VarType == eVT_string) {
+    m_valnum = atof(m_val.c_str());
+  }
   if (m_VarType != eVT_floatArray) { return m_valnum;}
   return m_FloatArrayValues[m_index];
 }

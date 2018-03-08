@@ -3,7 +3,8 @@
 
 #include "include/CWppInterpreter.h"
 #include "include/CColors.h"
-
+#include <map>
+#include <string>
 const char* code = "\nfloat zebra = 33.7; float a = 5;\n   float b = a + 5 * a;\n   float c = (a + b) * 4";
 
 #include <iostream>
@@ -47,7 +48,7 @@ bool equalString(std::string a, std::string b)
 void TestNumericEvaluator()
 {
   CMiniInterpreter interp;
-  interp.PreloadVariable("12zz",34.523);
+  interp.PreloadVariable("a12zz",34.523);
   interp.PreloadVariable("pi",3.1415926); float pi = 3.1415926; float a12zz = 34.523;
 
 
@@ -63,8 +64,8 @@ void TestNumericEvaluator()
   equalFloat( interp.EvaluateNumExpression("11+12+12 / 4 +101;"),(11+12+12 / 4 +101));
   equalFloat( interp.EvaluateNumExpression("-1;"),(-1));
   equalFloat( interp.EvaluateNumExpression("2 * -1;"),(2 * -1));
-  equalFloat( interp.EvaluateNumExpression("12zz * -1;"),(a12zz * -1));
-  equalFloat( interp.EvaluateNumExpression("12zz*-1;"),(a12zz*-1));
+  equalFloat( interp.EvaluateNumExpression("a12zz * -1;"),(a12zz * -1));
+  equalFloat( interp.EvaluateNumExpression("a12zz*-1;"),(a12zz*-1));
 
   equalFloat( interp.EvaluateNumExpression("3 + 4 * 2 * 1.5 - 6; "),(3 + 4 * 2 * 1.5 - 6)  );
   equalFloat( interp.EvaluateNumExpression("1.3 +-3.4 * 2 * 1.5 - 6; "),(1.3 +-3.4 * 2 * 1.5 - 6)  );
@@ -207,6 +208,47 @@ void TestExecuteFunction()
   equalBool(interp.ExecuteFunction("foo"),true);
   PassedMessage();
 }
+
+//std::function<bool(uint32_t,      std::map<std::string, CVariable*>&)>
+bool DebugCallBack(uint32_t line, std::map<std::string, CVariable*>& Varmap)
+{
+  std::cout << "\n at line : " << line << "\n";
+  for (auto var : Varmap) {
+    std::cout << "   " << var.second->GetName() << "   " << var.second->GetString() << std::endl;
+  }
+  return false;
+}
+
+
+void TestErrorChecking()
+{
+  CMiniInterpreter interp;
+  try {
+    interp.InterpretCode(" \n\n float a; float a; ");
+  } catch (const std::exception& e) {
+    std::cout << "Script failed totaly expected with: " << e.what() << std::endl;
+  }
+  try {
+    interp.InterpretCode(" \n\n float au = lk; ");
+  } catch (const std::exception& e) {
+    std::cout << "Script failed totaly expected with: " << e.what() << std::endl;
+  }
+  try {
+    interp.InterpretCode(" \n\n float aua  ");
+  } catch (const std::exception& e) {
+    std::cout << "Script failed totaly expected with: " << e.what() << std::endl;
+  }
+  try {
+    interp.InterpretCode(" \n\n float[] auat;\n auat = 8; ");
+  } catch (const std::exception& e) {
+    std::cout << "Script failed totaly expected with: " << e.what() << std::endl;
+  }
+  interp.Clean();
+  interp.RegisterStatementCallBack(DebugCallBack);
+  interp.InterpretCode(" \n\n float aurora = 8;\n float epsi = 8 + aurora; \n print(\"bla\");\n ");
+  PassedMessage();
+}
+
 //float Calculate(std::string p_expression);
 int main(int argc, char **argv)
 {
@@ -221,6 +263,7 @@ int main(int argc, char **argv)
   TestRegisterCustomBuiltInFun();
   TestPreloadVariable();
   TestExecuteFunction();
+  TestErrorChecking();
   EndReport();
 
 /*
