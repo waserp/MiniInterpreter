@@ -86,7 +86,7 @@ void ParChecker(const uint32_t p_count, const char * p_name, std::vector<CVariab
 
 void CMiniInterpreter::PushBuiltIns()
 {
-  m_BuiltInFunMap["print"] = [](std::vector<CVariable*>& parVec){ std::cout << Colors::yellow; for (auto pPar : parVec) { std::cout << pPar->GetString(); }  std::cout << Colors::white; return 0.0F;};
+  m_BuiltInFunMap["print"] = [](std::vector<CVariable*>& parVec){ std::cout << Colors::yellow; for (auto pPar : parVec) { std::cout << pPar->GetString(); }  std::cout << Colors::white << "\n"; return 0.0F;};
   m_BuiltInFunMap["sin"] = [](std::vector<CVariable*>& parVec){ std::cout << Colors::green << "fun sinus:" << sin(parVec[0]->GetFloatValue()) << Colors::white; return sin(parVec[0]->GetFloatValue());};
   //m_BuiltInFunMap["max"] = [](std::vector<CVariable*>& parVec){ float val; for (auto pPar : parVec) {  }  return 0.0F;};
 }
@@ -151,6 +151,7 @@ void CMiniInterpreter::CreateVariable(CVariable::eVarType p_VarType)
 
 void CMiniInterpreter::Clean()
 {
+  m_RecursionLevel = -1;
   for (auto it :  m_VarMap) {
     delete it.second;
   }
@@ -218,7 +219,7 @@ std::string CMiniInterpreter::GetStringValue(const char * p_varname)
 uint32_t CMiniInterpreter::GetCurrentLine()
 {
   uint32_t linecounter = 1;
-  const char * sp = m_StartPos;
+  const char * sp = m_StartPosAtReclevel0;
   while (sp < m_CurPos) {
     if (*sp == '\n') {linecounter++;}
     sp++;
@@ -358,8 +359,8 @@ ETokenType CMiniInterpreter::GetToken(const char type)
       //std::cout << "Redname succ >" << name << "<\n";
       auto itv = m_VarMap.find(name);
       if (itv != m_VarMap.end()) {
-        //std::cout << " in var map" << std::endl;
         CVariable* var = itv->second;
+        //std::cout << " in var map " << var->GetName()  <<  " " << var->GetTypeAsString() << " type " << type << std::endl;
         if (type == 'l') {
           ReadArrayIndex(var,'L');
           m_lValueVar = var;
@@ -781,6 +782,11 @@ void CMiniInterpreter::SkipPair(ETokenType p_Starttoken,ETokenType p_Endtoken, b
 
 void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)
 {
+
+  m_RecursionLevel++;
+  if (m_RecursionLevel==0){
+    m_StartPosAtReclevel0  = p_code;
+  }
     //printf("%s",p_code);
     m_CurPos = p_code;
     m_StartPos = p_code;
@@ -790,6 +796,7 @@ void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)
       //std::cout << "while after get token " << std::endl;
       if (totype == p_Endtoken) {
        //std::cout << "endtoken found \n";
+       m_RecursionLevel--;
        return;
       }
       switch (totype) {
@@ -800,16 +807,19 @@ void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)
           CreateVariable(CVariable::eVT_string);
         break;
         case eTT_ST_Variable:
-          if (GetToken('l') != eTT_SN_Equal) { ThrowFatalError("no '=' after variable name"); }
-          if ((m_lValueVar->GetType() == CVariable::eVT_float) || (m_lValueVar->GetType() == CVariable::eVT_floatArray)) {
-            m_lValueVar->SetFloatValue(EvaluateNumExpression(eTT_SN_Semicolon));
-          } else {
-            CVariable* lp = m_lValueVar;
-            lp->SetStringValue(EvaluateStringExpression(eTT_SN_Semicolon));
+          {
+            CVariable* Lvar = m_lValueVar; // back up because BuiltIn Function calls will overwrite this
+            if (GetToken('l') != eTT_SN_Equal) { ThrowFatalError("no '=' after variable name"); }
+            if ((Lvar->GetType() == CVariable::eVT_float) || (Lvar->GetType() == CVariable::eVT_floatArray)) {
+              Lvar->SetFloatValue(EvaluateNumExpression(eTT_SN_Semicolon));
+            } else {
+              Lvar->SetStringValue(EvaluateStringExpression(eTT_SN_Semicolon));
+            }
           }
         break;
         case eTT_SN_Zero:
           //std::cout << "script exit, processed:" << m_CurPos - m_StartPos << " of " << strlen(p_code) << std::endl;
+          m_RecursionLevel--;
           return;
         break;
         case eTT_SN_Semicolon: // stray semicolon
@@ -832,6 +842,7 @@ void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)
         break;
         default :
           ThrowFatalError("Unexpected token totype[%d]",totype);
+          m_RecursionLevel--;
           return;
         break;
       }

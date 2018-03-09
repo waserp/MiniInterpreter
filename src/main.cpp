@@ -140,6 +140,8 @@ void TestFloatArrays()
   interp.InterpretCode(" float[] bad;\n bad[1]= 1;\n bad[2]= 3;\n bad[3]= 1;\n bad[3] = bad[1] + bad[2];\n float enval = bad[3];\n ");
   equalFloat( interp.GetFloatValue("enval"), 4);
 
+  interp.InterpretCode("  float[] sindata;\n float t = 0.5;\n  sindata[4]= sin(t);\n float retval = sindata[4];\nprint(sindata[-1]);");
+  equalFloat(interp.GetFloatValue("retval"),sin(0.5F) );
   interp.InterpretCode(" print(\"data=\",data[1234])");
   PassedMessage();
 }

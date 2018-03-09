@@ -34,6 +34,7 @@ float CVariable::GetFloatValue()
 
 void CVariable::SetFloatValue(float p_val)
 {
+  //std::cout << "CVariable::SetFloatValue " << m_name << " val " << p_val << " ix " << m_WriteIndex << "\n\n";
   if (m_VarType != eVT_floatArray) {  m_valnum = p_val; return;}
   if (m_FloatArrayValues.size() <= m_WriteIndex) {
     m_FloatArrayValues.resize(m_WriteIndex + 1);

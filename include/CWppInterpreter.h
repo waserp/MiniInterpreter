@@ -167,6 +167,8 @@ private:
   CallBack_t                m_CallBack {nullptr};
 
   // parser state variables
+  int32_t                   m_RecursionLevel { -1 };
+  const char *              m_StartPosAtReclevel0 {nullptr};
   const char *              m_CurPos {nullptr};
   const char *              m_StartPos {nullptr};
   const char *              m_tokenName {nullptr};
