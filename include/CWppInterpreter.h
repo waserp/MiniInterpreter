@@ -165,7 +165,7 @@ private:
   std::map<std::string,BuiltInfunction_t>      m_BuiltInFunMap;
 
   CallBack_t                m_CallBack {nullptr};
-
+  bool                      m_Abort {false};
   // parser state variables
   int32_t                   m_RecursionLevel { -1 };
   const char *              m_StartPosAtReclevel0 {nullptr};

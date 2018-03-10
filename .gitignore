@@ -1,3 +1,9 @@
 bin
 MiniInterpreter.depend
 MiniInterpreter.layout
+WinDebugger/bin
+WinDebugger/obj
+WinDebugger/*.depend
+WinDebugger/*.layout
+
+

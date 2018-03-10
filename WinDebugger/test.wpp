@@ -1,0 +1,39 @@
+
+
+
+
+float a = 0;
+float t = 0;
+float[] data = [1,2,3,4,56,6];
+string ribichaesli= "message";
+print("hello ", data[-1] , "end");
+
+
+
+function calculateThing()
+{
+  if (t>1) {
+    print("T>1");
+  }
+
+}
+
+while (a < 10) {
+  t = a / 7;
+  data[a] = sin(t);
+  print(a);
+  print(data[-1]);
+  calculateThing();
+  a = a + 1;
+}
+
+// nothing bu
+
+print(a);
+
+float enwe = sin(a) + t;
+
+
+
+
+

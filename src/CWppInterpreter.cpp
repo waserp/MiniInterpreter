@@ -151,6 +151,7 @@ void CMiniInterpreter::CreateVariable(CVariable::eVarType p_VarType)
 
 void CMiniInterpreter::Clean()
 {
+  m_Abort = false;
   m_RecursionLevel = -1;
   for (auto it :  m_VarMap) {
     delete it.second;
@@ -729,7 +730,8 @@ void CMiniInterpreter::ExecuteWhile()
   if (totype != eTT_KW_RoundParOpen) { ThrowFatalError("Error no '(' after 'while'"); }
   const char * BeginOfExpression = m_CurPos;
   //std::cout << "\n     dump before entry >" << m_CurPos;
-  while ( 0 != lrintf(EvaluateNumExpression(eTT_KW_RoundParClose))) {
+  while (0 != lrintf(EvaluateNumExpression(eTT_KW_RoundParClose))) {
+    if (m_Abort) {return;}
     if (GetToken('l') != eTT_KW_BraceOpen) { ThrowFatalError("Error no '{' after 'while (..)'"); }
     InterpretCode(m_CurPos, eTT_KW_BraceClose);
     m_CurPos = BeginOfExpression; // back to begin if expression
@@ -782,7 +784,7 @@ void CMiniInterpreter::SkipPair(ETokenType p_Starttoken,ETokenType p_Endtoken, b
 
 void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)
 {
-
+  m_Abort = false;
   m_RecursionLevel++;
   if (m_RecursionLevel==0){
     m_StartPosAtReclevel0  = p_code;
@@ -790,10 +792,13 @@ void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)
     //printf("%s",p_code);
     m_CurPos = p_code;
     m_StartPos = p_code;
-    bool statementDone = false;
-    while (!statementDone) {
+    while (!m_Abort) {
       ETokenType totype = GetToken('l');
       //std::cout << "while after get token " << std::endl;
+      if (nullptr != m_CallBack) {
+        m_Abort = m_CallBack(GetCurrentLine(),m_VarMap);
+      }
+
       if (totype == p_Endtoken) {
        //std::cout << "endtoken found \n";
        m_RecursionLevel--;
@@ -846,10 +851,10 @@ void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)
           return;
         break;
       }
-      if (nullptr != m_CallBack) {
-        m_CallBack(GetCurrentLine(),m_VarMap);
-      }
+
       //printf("Gettoken result %i  %s \n",totype, m_tokenName);
       //if (totype == eTT_SN_Semicolon) {statementDone = true;}
     }
+    m_RecursionLevel--;
+    std::cout << m_RecursionLevel << " abort\n";
 }

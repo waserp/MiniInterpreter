@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="WinDebugger" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/WinDebugger" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-std=c++11" />
+					<Add option="-g" />
+					<Add directory="C:/workspace/MiniInterpreter/WinDebugger/WinDebugger/" />
+					<Add directory="../include" />
+					<Add directory="../../MiniInterpreter" />
+				</Compiler>
+				<Linker>
+					<Add library="gdi32" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-fexceptions" />
+		</Compiler>
+		<Unit filename="../include/CColors.h" />
+		<Unit filename="../include/CVariable.h" />
+		<Unit filename="../include/CWppInterpreter.h" />
+		<Unit filename="../include/CwppWindowsDebugger.h" />
+		<Unit filename="../src/CColors.cpp" />
+		<Unit filename="../src/CVariable.cpp" />
+		<Unit filename="../src/CWppInterpreter.cpp" />
+		<Unit filename="../src/CwppWindowsDebugger.cpp" />
+		<Unit filename="main.cpp" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
