@@ -87,7 +87,14 @@ void ParChecker(const uint32_t p_count, const char * p_name, std::vector<CVariab
 void CMiniInterpreter::PushBuiltIns()
 {
   m_BuiltInFunMap["print"] = [](std::vector<CVariable*>& parVec){ std::cout << Colors::yellow; for (auto pPar : parVec) { std::cout << pPar->GetString(); }  std::cout << Colors::white << "\n"; return 0.0F;};
-  m_BuiltInFunMap["sin"] = [](std::vector<CVariable*>& parVec){ std::cout << Colors::green << "fun sinus:" << sin(parVec[0]->GetFloatValue()) << Colors::white; return sin(parVec[0]->GetFloatValue());};
+  m_BuiltInFunMap["sin"] = [](std::vector<CVariable*>& parVec){ return sin(parVec[0]->GetFloatValue());};
+  m_BuiltInFunMap["cos"] = [](std::vector<CVariable*>& parVec){ return cos(parVec[0]->GetFloatValue());};
+  m_BuiltInFunMap["log"] = [](std::vector<CVariable*>& parVec){ return logf(parVec[0]->GetFloatValue());};
+  m_BuiltInFunMap["log10"] = [](std::vector<CVariable*>& parVec){ return log10f(parVec[0]->GetFloatValue());};
+  m_BuiltInFunMap["sqrt"] = [](std::vector<CVariable*>& parVec){ return sqrtf(parVec[0]->GetFloatValue());};
+//  m_BuiltInFunMap["mean"] = [](std::vector<CVariable*>& parVec){
+//     return mean(parVec[0]->GetFloatValue());
+//  };  // todo max min stddev
   //m_BuiltInFunMap["max"] = [](std::vector<CVariable*>& parVec){ float val; for (auto pPar : parVec) {  }  return 0.0F;};
 }
 
@@ -258,7 +265,7 @@ bool CMiniInterpreter::TryReadNumber()
   }
   if (isalpha(*pt)) {return false;}  // this covers cases like "453hello", which is not a number
   if (!DigitFlag) {return false;}  // we need at least a single digit, if there is none this is not a number
-  m_tokenValue = atof(m_CurPos);
+  m_tokenValue = static_cast<float>(atof(m_CurPos));
   m_CurPos = pt;
   //printf("try read number success [%f] \n",m_tokenValue);
   return true;
@@ -292,19 +299,25 @@ bool CMiniInterpreter::TryReadStringConstant()
   return true;
 }
 
-void CMiniInterpreter::ReadArrayIndex(CVariable* p_var, char p_mode)
+uint32_t CMiniInterpreter::ReadArrayIndex(CVariable* p_var, char p_mode)
 {
-  if (!p_var->Is_Array()) { return; }
+  if (!p_var->Is_Array()) { return 0; }
   while (isspace(*m_CurPos)) { m_CurPos++; }
   if (*m_CurPos != '[') { ThrowFatalError("Error, expected array index after variable [%s]",p_var->GetName().c_str()); }
   m_CurPos++;
-  uint32_t index = lrintf(EvaluateNumExpression(eTT_SN_ClosingBracket));
+  uint32_t index = -1;
+  if (*m_CurPos != ']') {
+    index = lrintf(EvaluateNumExpression(eTT_SN_ClosingBracket));
+  } else {
+    m_CurPos++;
+    index = -1;
+  }
   if (p_mode == 'L') {
     p_var->SetArrayWriteIndex(index);
   } else {
     p_var->SetArrayIndex(index);
   }
-
+  return index;
 }
 
 
@@ -362,7 +375,19 @@ ETokenType CMiniInterpreter::GetToken(const char type)
       if (itv != m_VarMap.end()) {
         CVariable* var = itv->second;
         //std::cout << " in var map " << var->GetName()  <<  " " << var->GetTypeAsString() << " type " << type << std::endl;
-        if (type == 'l') {
+        if (type == 'p') {   // p like parameter in function call
+          int32_t index = ReadArrayIndex(var,'L');
+          //std::cout << "first time p th"  << index << std::endl;
+          if ((!var->Is_Array()) || (index == -1))  { // if the complete array is the param or if the var is not an array
+            m_lValueVar = var;
+            return eTT_ST_Variable;
+          }
+          // if the var is an array we extract the value and return it as numerical
+
+          m_tokenValue = var->GetFloatValue(index);
+          //std::cout << "first time th"  << m_tokenValue << " ix " << index  << std::endl;
+          return eTT_ST_NumericValue;
+        } else if (type == 'l') {
           ReadArrayIndex(var,'L');
           m_lValueVar = var;
           //printf("det Lvar %s\n",var->GetName().c_str());
@@ -667,7 +692,7 @@ float CMiniInterpreter::ExecuteBuiltIn()
 {
     // and now parse the arguments
     std::vector<CVariable*> paramList;
-    ETokenType totype = GetToken('l');
+    ETokenType totype = GetToken('p');
     ETokenType NextExpected = eTT_KW_RoundParOpen;
     while (totype != eTT_KW_RoundParClose) {
       //std::cout << " ExecBuilt in : " << totype << std::endl;
@@ -707,7 +732,7 @@ float CMiniInterpreter::ExecuteBuiltIn()
           }
         break;
       }
-      totype = GetToken('l');
+      totype = GetToken('p');
     }
     //std::cout << "execute the function " << std::endl;
     m_tokenValue = m_LastBuiltInFunction(paramList);
@@ -814,9 +839,10 @@ void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)
         case eTT_ST_Variable:
           {
             CVariable* Lvar = m_lValueVar; // back up because BuiltIn Function calls will overwrite this
+            uint32_t LvarIndex = m_lValueVar->GetLIndex();
             if (GetToken('l') != eTT_SN_Equal) { ThrowFatalError("no '=' after variable name"); }
             if ((Lvar->GetType() == CVariable::eVT_float) || (Lvar->GetType() == CVariable::eVT_floatArray)) {
-              Lvar->SetFloatValue(EvaluateNumExpression(eTT_SN_Semicolon));
+              Lvar->SetFloatValue(EvaluateNumExpression(eTT_SN_Semicolon),LvarIndex);
             } else {
               Lvar->SetStringValue(EvaluateStringExpression(eTT_SN_Semicolon));
             }

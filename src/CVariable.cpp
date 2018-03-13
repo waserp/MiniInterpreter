@@ -1,7 +1,6 @@
 #include "include/CVariable.h"
 #include <iostream>
-
-
+#include <cmath>
 
 
 
@@ -46,4 +45,15 @@ const char * CVariable::GetTypeAsString()
 {
   static const char * t[]={"undef","float","float[]","string","string[]","illegal type value"};
   return t[std::min(static_cast<size_t>(m_VarType),sizeof(t)/sizeof(const char *))];
+}
+
+float CVariable::GetFloatValue(uint32_t p_index)
+{
+  if (eVT_floatArray != m_VarType) {
+    return nanf("0");
+  }
+  if (p_index >=  m_FloatArrayValues.size()) {
+    return nanf("0");
+  }
+  return m_FloatArrayValues[p_index];
 }

@@ -1,6 +1,6 @@
 #include "CColors.h"
 
-#ifdef __Linux__
+#ifdef __LINUX__
   const char Colors::red[]= {"\033[1;31m"};
   const char Colors::green[]= {"\033[1;32m"};
   const char Colors::yellow[]= {"\033[1;33m"};

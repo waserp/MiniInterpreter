@@ -152,7 +152,7 @@ private:
   float EvaluateNumExpression(ETokenType p_Endtoken);
   std::string EvaluateStringExpression(ETokenType p_Endtoken);
   bool TryReadNumber();
-  void ReadArrayIndex(CVariable* p_var, char p_mode = 'R');
+  uint32_t ReadArrayIndex(CVariable* p_var, char p_mode = 'R');
 
   ETokenType RemoveWhitespace();  // also remove comment
   ETokenType GetToken(const char type = 'l');

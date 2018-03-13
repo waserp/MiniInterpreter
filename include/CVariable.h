@@ -27,13 +27,14 @@ class CVariable {
 
     std::string& GetString();
     float GetFloatValue();
+    float GetFloatValue(uint32_t p_index);
     void SetType(eVarType p_VarType) { m_VarType = p_VarType; }
 
 
     void SetArrayIndex(uint32_t p_index) { m_index = p_index; }
     void SetArrayWriteIndex(uint32_t p_index) { m_WriteIndex = p_index; }
     void SetFloatValue(float p_val);
-
+    void SetFloatValue(float p_val, uint32_t p_index) {  m_WriteIndex = p_index;SetFloatValue(p_val); }
 
     void SetStringValue(std::string p_str) {m_val = p_str; }
 
@@ -45,8 +46,8 @@ class CVariable {
     /// @return variable name
     std::string& GetName() { return m_name; }
 
-
-
+    /// @return the write index
+    uint32_t GetLIndex() { return m_WriteIndex; }
 
 
   private:
