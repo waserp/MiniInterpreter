@@ -7,7 +7,7 @@ This project implements a very simple interpreter with the emphasis on ease of u
 Features:
 - Small Code footprint, standard C++11
 - C-esque syntax
-- Variable Types: float, string, boolean and one dimensional arrays of those.
+- Variable Types: float, string and one dimensional arrays of those.
 - script functions can be defined.
 - Easy to add function-calls to C++ functions
 
@@ -16,8 +16,7 @@ in early development, check back in April, I'm coding.
 
 ### TODO
 - function calls
-- Arrays
-- string variables
+- string Arrays
 
 
 ## Example application

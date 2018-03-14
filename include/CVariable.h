@@ -38,6 +38,9 @@ class CVariable {
 
     void SetStringValue(std::string p_str) {m_val = p_str; }
 
+
+    std::vector<float>& GetRawFloatArray() { return m_FloatArrayValues; }
+
     /// set variable name
     /// @param[in] p_name
     void SetName(std::string p_name) { m_name = p_name;}

@@ -6,12 +6,15 @@
 
 #include "include/CWppInterpreter.h"
 #include "include/CColors.h"
+#include "MathFun.h"
+
 #include <cstdio>
 #include <cstdint>
 #include <cstring>
 #include <ctype.h>
 #include <iostream>
 #include <stdarg.h>
+
 //#define Debug
 
 
@@ -92,9 +95,18 @@ void CMiniInterpreter::PushBuiltIns()
   m_BuiltInFunMap["log"] = [](std::vector<CVariable*>& parVec){ return logf(parVec[0]->GetFloatValue());};
   m_BuiltInFunMap["log10"] = [](std::vector<CVariable*>& parVec){ return log10f(parVec[0]->GetFloatValue());};
   m_BuiltInFunMap["sqrt"] = [](std::vector<CVariable*>& parVec){ return sqrtf(parVec[0]->GetFloatValue());};
-//  m_BuiltInFunMap["mean"] = [](std::vector<CVariable*>& parVec){
-//     return mean(parVec[0]->GetFloatValue());
-//  };  // todo max min stddev
+  m_BuiltInFunMap["mean"] = [](std::vector<CVariable*>& parVec){
+     return mean(parVec);
+  };
+  m_BuiltInFunMap["stddev"] = [](std::vector<CVariable*>& parVec){
+     return stddev(parVec);
+  };
+  m_BuiltInFunMap["min"] = [](std::vector<CVariable*>& parVec){
+     return minfun(parVec);
+  };
+  m_BuiltInFunMap["max"] = [](std::vector<CVariable*>& parVec){
+     return maxfun(parVec);
+  };
   //m_BuiltInFunMap["max"] = [](std::vector<CVariable*>& parVec){ float val; for (auto pPar : parVec) {  }  return 0.0F;};
 }
 
@@ -352,7 +364,7 @@ ETokenType CMiniInterpreter::GetToken(const char type)
     if ( RemoveWhitespace()== eTT_SN_Zero ) { return eTT_SN_Zero; }
 
 
-    if (type == 'n') {  // expect a number, so first try read number
+    if ((type == 'n') || (type == 'p')) {  // expect a number, so first try read number
       //printf("\n  type = 'n' rm whitespace>%s<\n",m_CurPos);
       if (TryReadNumber()) { return eTT_ST_NumericValue; }
     }
