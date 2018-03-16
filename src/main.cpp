@@ -53,12 +53,14 @@ bool isNanCheck(float a)
   testCountPassed++; return true;
 }
 
+#define EnterTest() std::cout << Colors::green << "\n--------------------------------------------------------------------------\nentering " << __func__  << std::endl;
 #define PassedMessage() std::cout << Colors::green << __func__  << ": Number of Tests passed: " << testCountPassed << Colors::white << std::endl; TotaltestCountPassed += testCountPassed; testCountPassed = 0; testSetsPassed+=1;
 
 #define EndReport() std::cout << Colors::green << "Total " << TotaltestCountPassed << " Tests passed in " << testSetsPassed << " test-sets\n";
 
 void TestNumericEvaluator()
 {
+  EnterTest();
   CMiniInterpreter interp;
   interp.PreloadVariable("a12zz",34.523);
   interp.PreloadVariable("pi",3.1415926); float pi = 3.1415926; float a12zz = 34.523;
@@ -88,6 +90,7 @@ void TestNumericEvaluator()
 
 
 void TestNumericBoleanEvaluator() {
+  EnterTest();
   CMiniInterpreter interp;
   equalFloat( interp.EvaluateNumExpression("5 < 6;"),(5 < 6));
   equalFloat( interp.EvaluateNumExpression("5 > 6;"),(5 > 6));
@@ -99,6 +102,7 @@ void TestNumericBoleanEvaluator() {
 }
 
 void TestWhileFlowControl() {
+  EnterTest();
   CMiniInterpreter interp;
   interp.InterpretCode("  float bar = 2; while(bar < 4) { print(\"{}{{bar=\",bar); bar = bar +1;}  print(\"exit\");  ");
   interp.InterpretCode("  float statusbar = 2; float count = 0; while(count == 0 ) { print(\"{}{{statusbar=\",statusbar); statusbar = statusbar +1; count = 1 + count; }  print(\"exit\");  ");
@@ -110,6 +114,7 @@ void TestWhileFlowControl() {
 }
 
 void TestFunctionCalls() {
+  EnterTest();
   CMiniInterpreter interp;
   interp.InterpretCode(" float globVar = 1; function fooNoPar () { print(\"fooNoPar\", globVar ,\"\n\"); globVar = 7; }  fooNoPar(2,3);  print(globVar);  ");
   equalFloat( interp.GetFloatValue("globVar"), 7); // set to 7 in function
@@ -118,6 +123,7 @@ void TestFunctionCalls() {
 }
 
 void TestIfFlowControl() {
+  EnterTest();
   CMiniInterpreter interp;
   interp.InterpretCode(" float globVar = 1; if (globVar==1) { globVar=3; } else { globVar=0; } print(globVar);  ");
   equalFloat( interp.GetFloatValue("globVar"), 3);
@@ -137,6 +143,7 @@ void TestIfFlowControl() {
 
 void TestFloatArrays()
 {
+  EnterTest();
   CMiniInterpreter interp;
   interp.InterpretCode(" float[] foo; ");
   interp.InterpretCode(" foo[7]= 7.12;");
@@ -170,6 +177,7 @@ void TestFloatArrays()
 
 void TestStrings()
 {
+  EnterTest();
   CMiniInterpreter interp;
   interp.InterpretCode(" string name; string color = \"green\"; string abc = \"aa\" \"bb\" ,\"cc\" color; ");
   equalString(interp.GetStringValue("color"),"green");
@@ -180,6 +188,7 @@ void TestStrings()
 
 void TestFloatArrayInitializers()
 {
+  EnterTest();
   CMiniInterpreter interp;
   interp.InterpretCode(" float[] data = [1,3 * 7 + 1,2.3,8]; print(\"data=\",data[-1]);\n float a0 = data[0];float a1 = data[1];float a2 = data[2];float a3 = data[3];");
   equalFloat( interp.GetFloatValue("a0"), 1);
@@ -191,6 +200,7 @@ void TestFloatArrayInitializers()
 
 float SampleMoveXY(std::vector<CVariable*>& plist)
 {
+
   std::cout << "Sample Fun Called with parameter:";
   for (auto p : plist) {
     std::cout << p->GetString() << " ";
@@ -201,6 +211,7 @@ float SampleMoveXY(std::vector<CVariable*>& plist)
 
 void TestRegisterCustomBuiltInFun()
 {
+  EnterTest();
   CMiniInterpreter interp;
   interp.RegisterCustomBuiltIn("MoveXY", SampleMoveXY);
   interp.InterpretCode(" float zz=3.2;  MoveXY(\"A11\",34,zz );");
@@ -209,6 +220,7 @@ void TestRegisterCustomBuiltInFun()
 
 void TestPreloadVariable()
 {
+  EnterTest();
   CMiniInterpreter interp;
   equalBool(interp.PreloadVariable("aa",34.56F),true);
   equalFloat( interp.GetFloatValue("aa"),34.56F);
@@ -239,6 +251,7 @@ void TestPreloadVariable()
 }
 void TestExecuteFunction()
 {
+  EnterTest();
   CMiniInterpreter interp;
   interp.InterpretCode(" print(\"before\"); \n//cmt \n print(\"after // this is not a comment\"); \n//commenrt ");
   interp.InterpretCode(" print(\"before\"); \n function foo(){ print(\"hello from foo\"); }   print(\"after\"); \n//commenrt ");
@@ -260,6 +273,7 @@ bool DebugCallBack(uint32_t line, std::map<std::string, CVariable*>& Varmap)
 
 void TestErrorChecking()
 {
+  EnterTest();
   CMiniInterpreter interp;
   bool CatchFlag = false;
   try {
@@ -302,8 +316,8 @@ void TestErrorChecking()
 
 void TestMathFun()
 {
+  EnterTest();
   CMiniInterpreter interp;
-  std::cout << "-----------\n";
   interp.InterpretCode("\nfloat[] data; data[2] = 435; data[1] = log10(data[2]); float bs1=data[1];");
   equalFloat( interp.GetFloatValue("bs1"),log10(435.0F));
   interp.InterpretCode("\n data[2] = 435; data[1] = sqrt(data[2]);  bs1=data[1];");
@@ -346,7 +360,36 @@ void TestMathFun()
   PassedMessage();
 }
 
+void TestLocalVariablesFun()
+{
+  EnterTest();
+  CMiniInterpreter interp;
+  const char * ym_script = R"(
+     print("script start");
+     float azimut = 3;
+     float elevation = 22;
+     float counter = 0;
 
+     function measure() {
+        float index = 3;
+        while (index) {
+          counter = counter + 1;
+          index = index - 1;
+        }
+     }
+     print(counter);
+
+   )";
+  interp.InterpretCode(ym_script);
+  isNanCheck(interp.GetFloatValue("index"));
+  equalFloat( interp.GetFloatValue("counter"),0);
+  equalBool(interp.ExecuteFunction("measure"),true);
+  equalBool(interp.ExecuteFunction("measure_bla"),false);
+  isNanCheck(interp.GetFloatValue("index"));
+  equalBool(interp.ExecuteFunction("measure"),true);
+  isNanCheck(interp.GetFloatValue("index"));
+  PassedMessage();
+}
 
 //float Calculate(std::string p_expression);
 int main(int argc, char **argv)
@@ -364,6 +407,7 @@ int main(int argc, char **argv)
   TestExecuteFunction();
   TestErrorChecking();
   TestMathFun();
+  TestLocalVariablesFun();
   EndReport();
 
 /*

@@ -137,6 +137,9 @@ void CMiniInterpreter::CreateVariable(CVariable::eVarType p_VarType)
   std::cout << Colors::Iblue << "Variable with name :[" << pVar->m_name.c_str() << "] created of type [" << pVar->GetTypeAsString() << "]" << Colors::white << std::endl;
   #endif // Debug
   m_VarMap[m_Unknownidentifier] = pVar;
+  if (m_pListofLocalVariables != nullptr) {
+    m_pListofLocalVariables->push_back(m_Unknownidentifier);
+  }
   totype = GetToken();
   if (totype == eTT_SN_Semicolon) { return; } // were done, ok
   if (totype == eTT_SN_Equal) {
@@ -642,7 +645,14 @@ bool CMiniInterpreter::ExecuteFunction(const char* p_name)
   auto itf = m_FunSpace.find(p_name);
   if (itf != m_FunSpace.end()) {  //std::cout << " function name found " << name << std::endl;
     m_LastFunctionDescriptor = itf->second;
+    auto oldList = m_pListofLocalVariables;  // backup for multiple levels
+    m_pListofLocalVariables = new std::vector<std::string>;
     InterpretCode(m_LastFunctionDescriptor->StartOfFuncode, eTT_KW_BraceClose);
+    for (auto& name: *m_pListofLocalVariables) {
+      DeleteVariable(name.c_str());
+    }
+    delete m_pListofLocalVariables;
+    m_pListofLocalVariables = oldList;
     return true;
   }
   return false;

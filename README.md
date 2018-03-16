@@ -10,6 +10,7 @@ Features:
 - Variable Types: float, string and one dimensional arrays of those.
 - script functions can be defined.
 - Easy to add function-calls to C++ functions
+- Tested under Linux and Windows
 
 ## State
 in early development, check back in April, I'm coding.

@@ -185,6 +185,10 @@ private:
   CVariable*                m_lValueVar {nullptr};
   std::map<std::string,CVariable*>*
                             m_ParameterVariableMap {nullptr};
+
+  /// if this pointer is not null, then every newly created variable name goes into this list.
+  /// Except preload variables. On Exit of the function all variables on this list are deleted.
+  std::vector<std::string>* m_pListofLocalVariables {nullptr};
 };
 
 
