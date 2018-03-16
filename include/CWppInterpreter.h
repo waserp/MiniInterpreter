@@ -113,6 +113,11 @@ class CMiniInterpreter {
     /// @param[in] p_val string value
     bool PreloadVariable(const char * p_varname, std::string p_val);
 
+    /// deletes a variable from the variable map
+    /// @param[in] p_varname name of the variable to delete
+    /// @return true if the variable was found and deleted else false is returned
+    bool DeleteVariable(const char * p_varname);
+
     /// Read the Value of a float Variable from the varspace
     /// @param[in] p_varname name of the variable
     /// @return the value

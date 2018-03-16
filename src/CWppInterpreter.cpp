@@ -196,6 +196,17 @@ bool CMiniInterpreter::PreloadVariable(const char * p_varname, float p_val)
   return false;
 }
 
+bool CMiniInterpreter::DeleteVariable(const char * p_varname)
+{
+  auto it = m_VarMap.find(p_varname);
+  if (it == m_VarMap.end()) {
+    return false;
+  }
+  m_VarMap.erase(it);
+  delete it->second;
+  return true;
+}
+
 bool CMiniInterpreter::PreloadVariable(const char * p_varname, std::string p_val)
 {
   CVariable* pv =FindExistingVariable(p_varname);

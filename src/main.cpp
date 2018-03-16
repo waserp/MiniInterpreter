@@ -5,6 +5,8 @@
 #include "include/CColors.h"
 #include <map>
 #include <string>
+#include <cmath>
+
 const char* code = "\nfloat zebra = 33.7; float a = 5;\n   float b = a + 5 * a;\n   float c = (a + b) * 4";
 
 #include <iostream>
@@ -40,6 +42,16 @@ bool equalString(std::string a, std::string b)
   return false;
 }
 
+bool isNanCheck(float a)
+{
+  std::cout << "nan check" << std::endl;
+  if (std::isnan(a)==0) {
+    std::cout << Colors::red << " ERROR " << " Expected nan but found: " << a << Colors::white << std::endl;
+    exit(-1);
+    return false;
+  }
+  testCountPassed++; return true;
+}
 
 #define PassedMessage() std::cout << Colors::green << __func__  << ": Number of Tests passed: " << testCountPassed << Colors::white << std::endl; TotaltestCountPassed += testCountPassed; testCountPassed = 0; testSetsPassed+=1;
 
@@ -209,6 +221,20 @@ void TestPreloadVariable()
   interp.Clean();
   equalBool(interp.PreloadVariable("aast",std::string("kkkkl")),true);
   equalBool(interp.PreloadVariable("aa",34.56F),true);
+  equalBool(interp.PreloadVariable("azimut",56.99F),true);
+  equalBool(interp.PreloadVariable("sendero",-1.87F),true);
+
+  equalBool(interp.DeleteVariable("aa"),true);
+  equalFloat( interp.GetFloatValue("azimut"),56.99F);
+  isNanCheck( interp.GetFloatValue("aa"));
+  equalBool(interp.PreloadVariable("aa",99.56F),true);
+  equalFloat( interp.GetFloatValue("azimut"),56.99F);
+  equalFloat( interp.GetFloatValue("aa"),99.56F);
+  equalBool(interp.DeleteVariable("azimut"),true);
+  isNanCheck( interp.GetFloatValue("azimut"));
+  equalBool(interp.PreloadVariable("azimut",99.56F),true);
+  equalBool(interp.PreloadVariable("azimut",99.56F),false);
+  equalBool(interp.DeleteVariable("inexistent"),false);
   PassedMessage();
 }
 void TestExecuteFunction()
