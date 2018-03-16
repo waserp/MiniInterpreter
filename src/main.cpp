@@ -384,9 +384,11 @@ void TestLocalVariablesFun()
   isNanCheck(interp.GetFloatValue("index"));
   equalFloat( interp.GetFloatValue("counter"),0);
   equalBool(interp.ExecuteFunction("measure"),true);
+  equalFloat( interp.GetFloatValue("counter"),3);
   equalBool(interp.ExecuteFunction("measure_bla"),false);
   isNanCheck(interp.GetFloatValue("index"));
   equalBool(interp.ExecuteFunction("measure"),true);
+  equalFloat( interp.GetFloatValue("counter"),6);
   isNanCheck(interp.GetFloatValue("index"));
   PassedMessage();
 }
