@@ -7,17 +7,27 @@
 std::string& CVariable::GetString()
 {
   if (m_VarType==eVT_float) {
-    return m_val = std::to_string(m_valnum);
+    m_convStream.str("");
+    m_convStream.clear();
+    m_convStream << m_valnum;
+    m_val = m_convStream.str();
+    return m_val;
   }
   if (m_VarType==eVT_floatArray) {
     //std::cout << "float Array print" << m_WriteIndex << "\n";
     if (m_WriteIndex >  m_FloatArrayValues.size()) {
-      m_val = "[";
-      for (auto& v : m_FloatArrayValues){  m_val+=std::to_string(v); if (&v!=&m_FloatArrayValues.back()) {m_val+=",";} }
-      m_val+="]";
+      m_convStream.str("");
+      m_convStream.clear();
+      m_convStream << "[";
+      for (auto& v : m_FloatArrayValues){  m_convStream << v; if (&v!=&m_FloatArrayValues.back()) { m_convStream << ",";} }
+      m_convStream << "]";
+      m_val = m_convStream.str();
       return m_val;
     }
-    m_val = std::to_string(m_FloatArrayValues[m_index]);
+    m_convStream.str("");
+    m_convStream.clear();
+    m_convStream << m_FloatArrayValues[m_index];
+    m_val = m_convStream.str();
   }
   return m_val;
 }

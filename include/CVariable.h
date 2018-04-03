@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+#include <sstream>
 
 
 class CVariable {
@@ -62,5 +63,6 @@ class CVariable {
     uint32_t           m_WriteIndex {0};
     bool               m_stackVarFlag {false};
     float              m_valnum {0};
+    std::stringstream  m_convStream;
 };
 #endif // CVARIABLE_H
