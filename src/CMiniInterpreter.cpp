@@ -4,7 +4,7 @@
 
 
 
-#include "include/CWppInterpreter.h"
+#include "include/CMiniInterpreter.h"
 #include "include/CColors.h"
 #include "MathFun.h"
 
