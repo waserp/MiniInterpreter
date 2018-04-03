@@ -146,6 +146,7 @@ private:
   void ExecuteWhile();
   void ExecuteIf();
   void ExecuteFunction();
+  void ExecuteFunction(functionDescriptor_t* p_fun);
   ETokenType GetNextOf(ETokenType a, ETokenType b);
   void SkipPair(ETokenType p_Starttoken,ETokenType p_Endtoken, bool p_first = true);
   void FindNext(const char * ch) {while (*m_CurPos!=0){ if (*m_CurPos==*ch) {m_CurPos++; return;} }throw std::runtime_error((" unexpected end of file while looking for [" + std::string(ch) + "]").c_str());}

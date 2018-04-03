@@ -640,19 +640,25 @@ ETokenType CMiniInterpreter::GetNextOf(ETokenType a, ETokenType b)
  #       #    #  #   ##  #    #     #       #    #    #  #   ##
  #        ####   #    #   ####      #       #     ####   #    #*/
 
-bool CMiniInterpreter::ExecuteFunction(const char* p_name)
+void CMiniInterpreter::ExecuteFunction(functionDescriptor_t* p_fun)
 {
-  auto itf = m_FunSpace.find(p_name);
-  if (itf != m_FunSpace.end()) {  //std::cout << " function name found " << name << std::endl;
-    m_LastFunctionDescriptor = itf->second;
     auto oldList = m_pListofLocalVariables;  // backup for multiple levels
     m_pListofLocalVariables = new std::vector<std::string>;
-    InterpretCode(m_LastFunctionDescriptor->StartOfFuncode, eTT_KW_BraceClose);
+    InterpretCode(p_fun->StartOfFuncode, eTT_KW_BraceClose);
     for (auto& name: *m_pListofLocalVariables) {
       DeleteVariable(name.c_str());
     }
     delete m_pListofLocalVariables;
     m_pListofLocalVariables = oldList;
+}
+
+
+bool CMiniInterpreter::ExecuteFunction(const char* p_name)
+{
+  auto itf = m_FunSpace.find(p_name);
+  if (itf != m_FunSpace.end()) {  //std::cout << " function name found " << name << std::endl;
+    m_LastFunctionDescriptor = itf->second;
+    ExecuteFunction(m_LastFunctionDescriptor);
     return true;
   }
   return false;
@@ -678,8 +684,8 @@ void CMiniInterpreter::ExecuteFunction()
   std::cout << Colors::violet << "execute this-->" << m_LastFunctionDescriptor->StartOfFuncode  <<  Colors::white << std::endl;
   #endif // Debug
   const char * backupPosition = m_CurPos;
-  InterpretCode(m_LastFunctionDescriptor->StartOfFuncode, eTT_KW_BraceClose);
-
+  //InterpretCode(m_LastFunctionDescriptor->StartOfFuncode, eTT_KW_BraceClose);
+  ExecuteFunction(m_LastFunctionDescriptor);
   // restore old parameters
   m_ParameterVariableMap = backup;
   m_CurPos = backupPosition; // continiue at old position

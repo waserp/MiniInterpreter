@@ -44,7 +44,6 @@ bool equalString(std::string a, std::string b)
 
 bool isNanCheck(float a)
 {
-  std::cout << "nan check" << std::endl;
   if (std::isnan(a)==0) {
     std::cout << Colors::red << " ERROR " << " Expected nan but found: " << a << Colors::white << std::endl;
     exit(-1);
@@ -393,6 +392,63 @@ void TestLocalVariablesFun()
   PassedMessage();
 }
 
+void TestFunctionCallfromCodeFun()
+{
+  EnterTest();
+  CMiniInterpreter interp;
+  const char * ym_script = R"(
+
+
+     function Incrementer() {
+       cnt = cnt + 1;
+     }
+
+     function IncrementCaller() {
+       Incrementer();
+       Incrementer();
+     }
+
+
+     function WhileIncrementer() {
+       float sbcntr = 5;
+       while (sbcntr) {
+         Incrementer();
+         sbcntr = sbcntr - 1;
+       }
+     }
+
+     float cnt = 0;
+
+
+     function testfun() {
+       cnt = cnt + 5;
+       print("testfun");
+     }
+
+
+     testfun();
+     float aCnt = cnt;
+     print("aCnt=",aCnt);
+     testfun();
+     float bCnt = cnt;
+     print("bCnt=",bCnt);
+
+     IncrementCaller();
+     float cCnt = cnt;
+     print("cCnt=",cCnt);
+     WhileIncrementer();
+     WhileIncrementer();
+     float dCnt = cnt;
+     print("dCnt=",dCnt);
+   )";
+  interp.InterpretCode(ym_script);
+  equalFloat( interp.GetFloatValue("aCnt"),5);
+  equalFloat( interp.GetFloatValue("bCnt"),10);
+  equalFloat( interp.GetFloatValue("cCnt"),12);
+  equalFloat( interp.GetFloatValue("dCnt"),22);
+  PassedMessage();
+}
+
 //float Calculate(std::string p_expression);
 int main(int argc, char **argv)
 {
@@ -410,6 +466,7 @@ int main(int argc, char **argv)
   TestErrorChecking();
   TestMathFun();
   TestLocalVariablesFun();
+  TestFunctionCallfromCodeFun();
   EndReport();
 
 /*
