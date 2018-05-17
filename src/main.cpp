@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 
-#include "include/CWppInterpreter.h"
+#include "include/CMiniInterpreter.h"
 #include "include/CColors.h"
 #include <map>
 #include <string>
@@ -449,6 +449,58 @@ void TestFunctionCallfromCodeFun()
   PassedMessage();
 }
 
+
+void TestSyntaxErrors()
+{
+  EnterTest();
+  CMiniInterpreter interp;
+  interp.InterpretCode("");
+  bool CatchFlag = false;
+  try {
+    interp.InterpretCode(" ' ");
+  } catch (const std::exception& e) {
+    std::cout << "Script failed totaly expected with: " << e.what() << std::endl;
+    CatchFlag = true;
+  }
+  equalBool(CatchFlag,true);
+  CatchFlag = false;
+  try {
+    interp.InterpretCode(" print('df'); ");
+  } catch (const std::exception& e) {
+    std::cout << "Script failed totaly expected with: " << e.what() << std::endl;
+    CatchFlag = true;
+  }
+  equalBool(CatchFlag,true);
+//  CatchFlag = false;
+//  try {
+//    interp.InterpretCode(" float a=1;\n if (a) { ");
+//  } catch (const std::exception& e) {
+//    std::cout << "Script failed totaly expected with: " << e.what() << std::endl;
+//    CatchFlag = true;
+//  }
+//  equalBool(CatchFlag,true);
+  CatchFlag = false;
+  try {
+    interp.InterpretCode(" function bla() { float a=1;\n if (a) { }");
+  } catch (const std::exception& e) {
+    std::cout << "Script failed totaly expected with: " << e.what() << std::endl;
+    CatchFlag = true;
+  }
+  equalBool(CatchFlag,true);
+
+  CatchFlag = false;
+  try {
+    interp.InterpretCode(" function bla() { ' float a=1;\n if (a) {  }   }");
+  } catch (const std::exception& e) {
+    std::cout << "Script failed totaly expected with: " << e.what() << std::endl;
+    CatchFlag = true;
+  }
+  equalBool(CatchFlag,true);
+
+
+  PassedMessage();
+}
+
 //float Calculate(std::string p_expression);
 int main(int argc, char **argv)
 {
@@ -467,6 +519,7 @@ int main(int argc, char **argv)
   TestMathFun();
   TestLocalVariablesFun();
   TestFunctionCallfromCodeFun();
+  TestSyntaxErrors();
   EndReport();
 
 /*

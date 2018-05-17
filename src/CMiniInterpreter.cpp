@@ -839,6 +839,7 @@ void CMiniInterpreter::SkipPair(ETokenType p_Starttoken,ETokenType p_Endtoken, b
     totype = GetToken('l');
     if (totype == p_Starttoken) {SkipPair(p_Starttoken,p_Endtoken,false);}
     if (totype == eTT_SN_Zero) { ThrowFatalError("Error SkipPair no '}' before end of file");}
+    if (totype == eTT_SN_LISTEND) { ThrowFatalError("Error SkipPair unknown token");}
   } while(totype != p_Endtoken);
 }
 
