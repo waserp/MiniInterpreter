@@ -6,7 +6,7 @@
 
 #include "include/CMiniInterpreter.h"
 #include "include/CColors.h"
-#include "MathFun.h"
+#include "include/MathFun.h"
 
 #include <cstdio>
 #include <cstdint>
