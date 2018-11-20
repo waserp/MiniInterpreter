@@ -28,10 +28,12 @@
 		<Unit filename="include/CMiniInterpreter.h" />
 		<Unit filename="include/CVariable.h" />
 		<Unit filename="include/MathFun.h" />
+		<Unit filename="include/MiniInterpreterEnums.h" />
 		<Unit filename="src/CColors.cpp" />
 		<Unit filename="src/CMiniInterpreter.cpp" />
 		<Unit filename="src/CVariable.cpp" />
 		<Unit filename="src/MathFun.cpp" />
+		<Unit filename="src/MiniInterpreterEnums.cpp" />
 		<Unit filename="src/main.cpp" />
 		<Extensions>
 			<code_completion />
