@@ -550,6 +550,61 @@ void TestSyntaxErrors()
   PassedMessage();
 }
 
+
+void TestMultilevelFunError()
+{
+  EnterTest();
+  CMiniInterpreter interp;
+  const char * ym_script = R"(
+
+    float a = 0;
+    float b = 11;
+    float c = 16;
+    float d = 19;
+
+
+
+
+
+     function main() {
+       afun();
+       bfun();
+       afun();
+
+       print("main done");
+     }
+
+     function cfun() {
+       c = c * 3;
+       UndefinedVariable = 9;
+     }
+
+     function afun() {
+       a = a + 11;
+     }
+
+     function bfun() {
+       afun();
+       b = b + 1;
+       cfun();
+     }
+
+
+   )";
+  interp.InterpretCode(ym_script);
+  bool CatchFlag = false;
+  try {
+    interp.ExecuteFunction("main");
+  } catch (const std::exception& e) {
+    std::cout << "Script failed totaly expected with: " << e.what() << std::endl;
+    CatchFlag = true;
+  }
+  equalBool(CatchFlag,true);
+
+  PassedMessage();
+}
+
+
 //float Calculate(std::string p_expression);
 int main(int argc, char **argv)
 {
@@ -571,7 +626,7 @@ int main(int argc, char **argv)
   TestSyntaxErrors();
   TestMultilevelFun();
   EndReport();
-
+  TestMultilevelFunError();
 /*
   interp.PreloadVariable("12zz",34.523);
   interp.PreloadVariable("pi",3.1415926); float pi = 3.1415926; float a12zz = 34.523;

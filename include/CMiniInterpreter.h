@@ -77,8 +77,7 @@ class CMiniInterpreter {
 
     /// Executes Code
     /// @param[in] p_code code to execute
-    /// @param[in] p_Endtoken the endtoken
-    void InterpretCode(const char * p_code, ETokenType p_Endtoken = eTT_SN_Zero);
+    void InterpretCode(const char * p_code);
 
     /// Execute the function with the given name. The function must have been in the previously
     /// with InterpretCode parsed code.
@@ -137,6 +136,11 @@ class CMiniInterpreter {
     void RegisterStatementCallBack(CallBack_t p_CallBack) { m_CallBack = p_CallBack; }
 
 private:
+  /// Executes Code
+  /// @param[in] p_code code to execute
+  /// @param[in] p_Endtoken the endtoken
+  void InterpretCode(const char * p_code, ETokenType p_Endtoken);
+
   void ThrowFatalError(const char *format, ...);
   bool TryReadName(std::string& name);
   bool TryReadStringConstant();
@@ -165,8 +169,8 @@ private:
   bool keyComp(const char * p_keyword);
   CVariable* FindExistingVariable(const char * p_name);
 
-  std::map<std::string,CVariable*>                         m_VarMap;
 
+  std::map<std::string,CVariable*>             m_VarMap;
   std::map<std::string,functionDescriptor_t*>  m_FunSpace;  // function name to point in code after function name i.e. "function foo(float a, float b)" the const char* points to '('.
   std::map<std::string,BuiltInfunction_t>      m_BuiltInFunMap;
 
@@ -178,6 +182,7 @@ private:
   const char *              m_CurPos {nullptr};
   const char *              m_StartPos {nullptr};
   const char *              m_tokenName {nullptr};
+  const char *              m_StartOfCode {nullptr};
   std::string               m_Unknownidentifier;
   std::string               m_StringConstant;
   BuiltInfunction_t         m_LastBuiltInFunction {nullptr};

@@ -14,9 +14,8 @@
 				<Compiler>
 					<Add option="-std=c++11" />
 					<Add option="-g" />
-					<Add directory="/home/waserp/tmp/codeliteworkspace/MiniInterpreter/" />
-					<Add directory="include" />
-					<Add directory="C:/workspace/MiniInterpreter/" />
+					<Add directory="." />
+					<Add directory="./include" />
 				</Compiler>
 			</Target>
 		</Build>
@@ -26,12 +25,12 @@
 			<Add option="-D__LINUX__" />
 		</Compiler>
 		<Unit filename="include/CColors.h" />
-		<Unit filename="include/CVariable.h" />
 		<Unit filename="include/CMiniInterpreter.h" />
+		<Unit filename="include/CVariable.h" />
 		<Unit filename="include/MathFun.h" />
 		<Unit filename="src/CColors.cpp" />
-		<Unit filename="src/CVariable.cpp" />
 		<Unit filename="src/CMiniInterpreter.cpp" />
+		<Unit filename="src/CVariable.cpp" />
 		<Unit filename="src/MathFun.cpp" />
 		<Unit filename="src/main.cpp" />
 		<Extensions>

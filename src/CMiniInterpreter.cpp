@@ -253,7 +253,7 @@ std::string CMiniInterpreter::GetStringValue(const char * p_varname)
 uint32_t CMiniInterpreter::GetCurrentLine()
 {
   uint32_t linecounter = 1;
-  const char * sp = m_StartPosAtReclevel0;
+  const char * sp = m_StartOfCode;
   while (sp < m_CurPos) {
     if (*sp == '\n') {linecounter++;}
     sp++;
@@ -844,7 +844,11 @@ void CMiniInterpreter::SkipPair(ETokenType p_Starttoken,ETokenType p_Endtoken, b
 }
 
 
-
+void CMiniInterpreter::InterpretCode(const char * p_code)
+{
+  m_StartOfCode = p_code;
+  InterpretCode(p_code, eTT_SN_Zero);
+}
 
 
 void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)
