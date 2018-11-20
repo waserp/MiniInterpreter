@@ -916,7 +916,11 @@ void CMiniInterpreter::InterpretCode(const char * p_code, ETokenType p_Endtoken)
           ExecuteIf();
         break;
         default :
-          ThrowFatalError("Unexpected token totype[%d]",totype);
+          if (totype == eTT_NM_UnknownIdentifier) {
+            ThrowFatalError("Unknown Identifier [%s]",m_Unknownidentifier.c_str());
+          } else {
+            ThrowFatalError("Unexpected token totype [%d] which is [%s]",totype, EtokenTypeToString(totype));
+          }
           m_RecursionLevel--;
           return;
         break;

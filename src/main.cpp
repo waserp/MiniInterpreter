@@ -601,6 +601,16 @@ void TestMultilevelFunError()
   }
   equalBool(CatchFlag,true);
 
+  CatchFlag = false;
+  try {
+    interp.Clean();
+    interp.InterpretCode("\nfloat a=0;\n = print(\"a\");\n");
+  } catch (const std::exception& e) {
+    std::cout << "Script failed totaly expected with: " << e.what() << std::endl;
+    CatchFlag = true;
+    std::cout << "set catchflag\n";
+  }
+  equalBool(CatchFlag,true);
   PassedMessage();
 }
 
