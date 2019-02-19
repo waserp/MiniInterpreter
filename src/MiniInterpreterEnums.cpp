@@ -1,5 +1,5 @@
 
-#include "MiniInterpreterEnums.h"
+#include "include/MiniInterpreterEnums.h"
 
 const char * EtokenTypeToString(ETokenType p_token)
 {

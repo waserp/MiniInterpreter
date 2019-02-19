@@ -1,4 +1,4 @@
-#include "CColors.h"
+#include "include/CColors.h"
 
 #ifdef __LINUX__
   const char Colors::red[]= {"\033[1;31m"};

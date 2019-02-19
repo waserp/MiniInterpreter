@@ -5,5 +5,5 @@ WinDebugger/bin
 WinDebugger/obj
 WinDebugger/*.depend
 WinDebugger/*.layout
-
+mipTest/Debug
 
