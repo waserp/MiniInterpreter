@@ -1,5 +1,6 @@
 #include <gtest/gtest.h> // googletest header file
 #include "include/CMiniInterpreter.h"
+#include <math.h>
 
 TEST(TestLocalVariables, Simple )
 {
@@ -21,13 +22,13 @@ TEST(TestLocalVariables, Simple )
 
    )";
   interp.InterpretCode(ym_script);
-  //isNanCheck(interp.GetFloatValue("index"));
+  ASSERT_TRUE(isnan(interp.GetFloatValue("index")));
   EXPECT_FLOAT_EQ( interp.GetFloatValue("counter"),0);
   ASSERT_EQ(interp.ExecuteFunction("measure"),true);
   EXPECT_FLOAT_EQ( interp.GetFloatValue("counter"),3);
   ASSERT_EQ(interp.ExecuteFunction("measure_bla"),false);
-  //isNanCheck(interp.GetFloatValue("index"));
+  ASSERT_TRUE(isnan(interp.GetFloatValue("index")));
   ASSERT_EQ(interp.ExecuteFunction("measure"),true);
   EXPECT_FLOAT_EQ( interp.GetFloatValue("counter"),6);
-  //isNanCheck(interp.GetFloatValue("index"));
+  ASSERT_TRUE(isnan(interp.GetFloatValue("index")));
 }

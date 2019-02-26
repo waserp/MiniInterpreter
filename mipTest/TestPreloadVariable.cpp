@@ -1,7 +1,7 @@
 
 #include <gtest/gtest.h> // googletest header file
 #include "include/CMiniInterpreter.h"
-
+#include <math.h>
 
 TEST(TestPreloadVariable, Simple )
 {
@@ -23,12 +23,12 @@ TEST(TestPreloadVariable, Simple )
 
   ASSERT_EQ(interp.DeleteVariable("aa"),true);
   EXPECT_FLOAT_EQ( interp.GetFloatValue("azimut"),56.99F);
-  //isNanCheck( interp.GetFloatValue("aa"));
+  ASSERT_TRUE(isnan(interp.GetFloatValue("aa")));
   ASSERT_EQ(interp.PreloadVariable("aa",99.56F),true);
   EXPECT_FLOAT_EQ( interp.GetFloatValue("azimut"),56.99F);
   EXPECT_FLOAT_EQ( interp.GetFloatValue("aa"),99.56F);
   ASSERT_EQ(interp.DeleteVariable("azimut"),true);
-  //isNanCheck( interp.GetFloatValue("azimut"));
+  ASSERT_TRUE(isnan( interp.GetFloatValue("azimut")));
   ASSERT_EQ(interp.PreloadVariable("azimut",99.56F),true);
   ASSERT_EQ(interp.PreloadVariable("azimut",99.56F),false);
   ASSERT_EQ(interp.DeleteVariable("inexistent"),false);
