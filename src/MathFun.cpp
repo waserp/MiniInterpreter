@@ -1,8 +1,9 @@
+#define NOMINMAX
 #include "include/MathFun.h"
 #include <cmath>
 #include <limits>
 #include <iostream>
-
+#include <algorithm>
 
 float mean(std::vector<CVariable*>& parVec)
 {

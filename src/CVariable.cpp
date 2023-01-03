@@ -1,4 +1,5 @@
 #include "include/CVariable.h"
+#include <algorithm>
 #include <iostream>
 #include <cmath>
 
@@ -32,10 +33,18 @@ std::string& CVariable::GetString()
   return m_val;
 }
 
+bool CVariable::GetBool()
+{
+  if (m_val.compare("true") == 0) {
+    return true;
+  }
+  return false;
+}
+
 float CVariable::GetFloatValue()
 {
   if (m_VarType == eVT_string) {
-    m_valnum = atof(m_val.c_str());
+    m_valnum = static_cast<float>(atof(m_val.c_str()));
   }
   if (m_VarType != eVT_floatArray) { return m_valnum;}
   return m_FloatArrayValues[m_index];

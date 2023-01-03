@@ -10,6 +10,7 @@ enum ETokenType {
   eTT_SN_Equal,
   eTT_SN_Mul,
   eTT_SN_Div,
+  eTT_SN_RemOp,
   eTT_SN_Semicolon,
   eTT_KW_Comma,
   eTT_SN_LessThan = 20,

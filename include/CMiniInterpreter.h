@@ -71,6 +71,8 @@ class CMiniInterpreter {
     /// @param[in] p_val float value
     bool PreloadVariable(const char * p_varname, float p_val);
 
+    bool PreloadVariable(const char* p_varname, std::vector<float> p_val);
+
     /// Create or if it already exists update the value of a variable
     /// @param[in] p_varname name of the variable to create
     /// @param[in] p_val string value

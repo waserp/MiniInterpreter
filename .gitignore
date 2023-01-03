@@ -1,4 +1,5 @@
 bin
+obj
 MiniInterpreter.depend
 MiniInterpreter.layout
 WinDebugger/bin

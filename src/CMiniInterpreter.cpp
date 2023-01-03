@@ -33,6 +33,7 @@ KeyWordList_t KeyWords[] = {
   {eTT_SN_Equal,"="},
   {eTT_SN_Mul,"*"},
   {eTT_SN_Div,"/"},
+  {eTT_SN_RemOp,"%" },
   {eTT_SN_Semicolon,";"},
   {eTT_KW_Comma,","},
   {eTT_SN_LessThan,"<"},
@@ -107,6 +108,7 @@ void CMiniInterpreter::PushBuiltIns()
   m_BuiltInFunMap["max"] = [](std::vector<CVariable*>& parVec){
      return maxfun(parVec);
   };
+  m_BuiltInFunMap["length"] = [](std::vector<CVariable*>& parVec) {   return (parVec[0]->GetArrayLength()); };
   //m_BuiltInFunMap["max"] = [](std::vector<CVariable*>& parVec){ float val; for (auto pPar : parVec) {  }  return 0.0F;};
 }
 
@@ -183,6 +185,8 @@ void CMiniInterpreter::Clean()
     delete fundesc.second;
   }
   m_FunSpace.clear();
+  m_pListofLocalVariables = nullptr; // todo fix this in case of an exception
+  m_ParameterVariableMap = nullptr;
 }
 
 bool CMiniInterpreter::PreloadVariable(const char * p_varname, float p_val)
@@ -199,14 +203,31 @@ bool CMiniInterpreter::PreloadVariable(const char * p_varname, float p_val)
   return false;
 }
 
+bool CMiniInterpreter::PreloadVariable(const char* p_varname, std::vector<float> p_val)
+{
+  CVariable* pv = FindExistingVariable(p_varname);
+  if (pv == nullptr) {
+    pv = new CVariable(CVariable::eVT_floatArray);
+    pv->SetName(p_varname);
+    std::vector<float>& far = pv->GetRawFloatArray();
+    far = p_val;
+    m_VarMap[p_varname] = pv;
+    return true;
+  }
+  std::vector<float>& far = pv->GetRawFloatArray();
+  far = p_val;
+  return false;
+}
+
 bool CMiniInterpreter::DeleteVariable(const char * p_varname)
 {
   auto it = m_VarMap.find(p_varname);
   if (it == m_VarMap.end()) {
     return false;
   }
+  CVariable* dv = it->second;
   m_VarMap.erase(it);
-  delete it->second;
+  delete dv;
   return true;
 }
 
@@ -516,7 +537,7 @@ float CMiniInterpreter::EvaluateNumExpression(ETokenType p_Endtoken)
         tokenStack.push_back(totype);
       }
       LastPrecedence = 0;
-    } else if (( totype == eTT_SN_Mul ) || ( totype == eTT_SN_Div )) {
+    } else if (( totype == eTT_SN_Mul ) || ( totype == eTT_SN_Div ) || ( totype == eTT_SN_RemOp )) {
       nextTtype = 'n';
       if (LastPrecedence < 1) {
         tokenStack.push_back(totype);
@@ -585,6 +606,8 @@ float CMiniInterpreter::EvaluateNumExpression(ETokenType p_Endtoken)
         case eTT_SN_Mul: result = opa * opb; //std::cout << opa << " * " << opb <<  " = " << result << "\n";
            break;
         case eTT_SN_Div: result = opb / opa; //std::cout << opb << " / " << opa <<  " = " << result << "\n";
+           break;
+        case eTT_SN_RemOp :  result = static_cast<float>(lrintf(opb) % lrintf(opa)); //std::cout << opb << " / " << opa <<  " = " << result << "\n";
            break;
         case eTT_SN_LessThan: result = (opb < opa); //std::cout << opb << " < " << opa <<  " = " << result << "\n";
            break;

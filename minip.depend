@@ -1,0 +1,104 @@
+# depslib dependency file v1.0
+1604598271 source:/home/wasp/Projects/MiniInterpreter/src/CColors.cpp
+	"include/CColors.h"
+
+1604598271 source:/home/wasp/Projects/MiniInterpreter/src/CMiniInterpreter.cpp
+	"include/CMiniInterpreter.h"
+	"include/CColors.h"
+	"include/MathFun.h"
+	<cstdio>
+	<cstdint>
+	<cstring>
+	<ctype.h>
+	<iostream>
+	<stdarg.h>
+
+1604598271 source:/home/wasp/Projects/MiniInterpreter/src/CVariable.cpp
+	"include/CVariable.h"
+	<iostream>
+	<cmath>
+
+1604598271 source:/home/wasp/Projects/MiniInterpreter/src/MathFun.cpp
+	"include/MathFun.h"
+	<cmath>
+	<limits>
+	<iostream>
+
+1604598271 source:/home/wasp/Projects/MiniInterpreter/src/MiniInterpreterEnums.cpp
+	"include/MiniInterpreterEnums.h"
+
+1604598271 source:/home/wasp/Projects/MiniInterpreter/mipTest/main.cpp
+	<gtest/gtest.h>
+
+1604598271 source:/home/wasp/Projects/MiniInterpreter/mipTest/TestArithmeticExpressionsSimple.cpp
+	<gtest/gtest.h>
+	"include/CMiniInterpreter.h"
+
+1604598271 source:/home/wasp/Projects/MiniInterpreter/mipTest/TestDebugCallBack.cpp
+	<gtest/gtest.h>
+	"include/CMiniInterpreter.h"
+
+1669668365 source:/home/wasp/Projects/MiniInterpreter/mipTest/TestDeviceCommands.cpp
+	<gtest/gtest.h>
+	"include/CMiniInterpreter.h"
+
+1604598271 source:/home/wasp/Projects/MiniInterpreter/mipTest/TestFloatArrays.cpp
+	<gtest/gtest.h>
+	"include/CMiniInterpreter.h"
+
+1604598271 source:/home/wasp/Projects/MiniInterpreter/mipTest/TestFunctionCallFromCode.cpp
+	<gtest/gtest.h>
+	"include/CMiniInterpreter.h"
+
+1604598271 source:/home/wasp/Projects/MiniInterpreter/mipTest/TestFunctionCalls.cpp
+	<gtest/gtest.h>
+	"include/CMiniInterpreter.h"
+
+1604598271 source:/home/wasp/Projects/MiniInterpreter/mipTest/TestIfFlowControl.cpp
+	<gtest/gtest.h>
+	"include/CMiniInterpreter.h"
+
+1604598271 source:/home/wasp/Projects/MiniInterpreter/mipTest/TestLocalVariablescpp.cpp
+	<gtest/gtest.h>
+	"include/CMiniInterpreter.h"
+	<math.h>
+
+1604598271 source:/home/wasp/Projects/MiniInterpreter/mipTest/TestMathFunctions.cpp
+	<gtest/gtest.h>
+	"include/CMiniInterpreter.h"
+
+1604598271 source:/home/wasp/Projects/MiniInterpreter/mipTest/TestMultilevelFun.cpp
+	<gtest/gtest.h>
+	"include/CMiniInterpreter.h"
+
+1604598271 source:/home/wasp/Projects/MiniInterpreter/mipTest/TestMultilevelFunError.cpp
+	<gtest/gtest.h>
+	"include/CMiniInterpreter.h"
+
+1604598271 source:/home/wasp/Projects/MiniInterpreter/mipTest/TestNumericBooleanEvaluator.cpp
+	<gtest/gtest.h>
+	"include/CMiniInterpreter.h"
+
+1604598271 source:/home/wasp/Projects/MiniInterpreter/mipTest/TestPreloadVariable.cpp
+	<gtest/gtest.h>
+	"include/CMiniInterpreter.h"
+	<math.h>
+
+1604598271 source:/home/wasp/Projects/MiniInterpreter/mipTest/TestRegisterCustomBuildInFun.cpp
+	<gtest/gtest.h>
+	"include/CMiniInterpreter.h"
+	<string>
+
+1604598271 source:/home/wasp/Projects/MiniInterpreter/mipTest/TestStrings.cpp
+	<gtest/gtest.h>
+	"include/CMiniInterpreter.h"
+	<string>
+
+1604598271 source:/home/wasp/Projects/MiniInterpreter/mipTest/TestSyntaxErrors.cpp
+	<gtest/gtest.h>
+	"include/CMiniInterpreter.h"
+
+1604598271 source:/home/wasp/Projects/MiniInterpreter/mipTest/TestWhileFlowControl.cpp
+	<gtest/gtest.h>
+	"include/CMiniInterpreter.h"
+

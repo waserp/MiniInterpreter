@@ -28,10 +28,11 @@ class CVariable {
 
     std::string& GetString();
     float GetFloatValue();
+    bool GetBool();
     float GetFloatValue(uint32_t p_index);
     void SetType(eVarType p_VarType) { m_VarType = p_VarType; }
 
-
+    float GetArrayLength() { return m_FloatArrayValues.size(); }
     void SetArrayIndex(uint32_t p_index) { m_index = p_index; }
     void SetArrayWriteIndex(uint32_t p_index) { m_WriteIndex = p_index; }
     void SetFloatValue(float p_val);

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<CodeLite_Project Name="mipTest" Version="10.0.0" InternalType="Console">
+<CodeLite_Project Name="mipTest" Version="11000" InternalType="Console">
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
@@ -7,26 +7,28 @@
     <File Name="../src/CVariable.cpp"/>
     <File Name="../src/CwppWindowsDebugger.cpp" ExcludeProjConfig="Debug"/>
     <File Name="../src/CColors.cpp"/>
-    <File Name="../src/main.cpp" ExcludeProjConfig="Debug"/>
     <File Name="../src/MiniInterpreterEnums.cpp"/>
     <File Name="../src/MathFun.cpp"/>
     <File Name="../src/CMiniInterpreter.cpp"/>
-    <File Name="TestArithmeticExpressionsSimple.cpp"/>
-    <File Name="TestNumericBooleanEvaluator.cpp"/>
-    <File Name="TestWhileFlowControl.cpp"/>
-    <File Name="TestFunctionCalls.cpp"/>
-    <File Name="TestIfFlowControl.cpp"/>
-    <File Name="TestFloatArrays.cpp"/>
-    <File Name="TestStrings.cpp"/>
-    <File Name="TestRegisterCustomBuildInFun.cpp"/>
-    <File Name="TestPreloadVariable.cpp"/>
-    <File Name="TestDebugCallBack.cpp"/>
-    <File Name="TestMathFunctions.cpp"/>
-    <File Name="TestLocalVariablescpp.cpp"/>
-    <File Name="TestFunctionCallFromCode.cpp"/>
-    <File Name="TestMultilevelFun.cpp"/>
-    <File Name="TestSyntaxErrors.cpp"/>
-    <File Name="TestMultilevelFunError.cpp"/>
+    <VirtualDirectory Name="Test">
+      <File Name="TestArithmeticExpressionsSimple.cpp"/>
+      <File Name="TestDebugCallBack.cpp"/>
+      <File Name="TestFloatArrays.cpp"/>
+      <File Name="TestFunctionCallFromCode.cpp"/>
+      <File Name="TestFunctionCalls.cpp"/>
+      <File Name="TestIfFlowControl.cpp"/>
+      <File Name="TestLocalVariablescpp.cpp"/>
+      <File Name="TestMathFunctions.cpp"/>
+      <File Name="TestMultilevelFun.cpp"/>
+      <File Name="TestMultilevelFunError.cpp"/>
+      <File Name="TestNumericBooleanEvaluator.cpp"/>
+      <File Name="TestPreloadVariable.cpp"/>
+      <File Name="TestRegisterCustomBuildInFun.cpp"/>
+      <File Name="TestStrings.cpp"/>
+      <File Name="TestSyntaxErrors.cpp"/>
+      <File Name="TestWhileFlowControl.cpp"/>
+      <File Name="TestDeviceCommands.cpp"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>

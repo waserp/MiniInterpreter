@@ -18,6 +18,7 @@ in early development, check back in April, I'm coding.
 ### TODO
 - function calls
 - string Arrays
+- for loop
 
 
 ## Example application
